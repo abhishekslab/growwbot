@@ -8,6 +8,7 @@ Database file: server/trades.db (auto-created on first run).
 import sqlite3
 import os
 from datetime import datetime, timezone
+from typing import Optional, List
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "trades.db")
 
@@ -93,14 +94,14 @@ def create_trade(data: dict) -> dict:
     return _row_to_dict(row)
 
 
-def get_trade(trade_id: int) -> dict | None:
+def get_trade(trade_id: int) -> Optional[dict]:
     conn = _get_conn()
     row = conn.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     conn.close()
     return _row_to_dict(row) if row else None
 
 
-def list_trades(status: str | None = None, symbol: str | None = None) -> list[dict]:
+def list_trades(status: Optional[str] = None, symbol: Optional[str] = None) -> List[dict]:
     conn = _get_conn()
     query = "SELECT * FROM trades WHERE 1=1"
     params: list = []
@@ -116,7 +117,7 @@ def list_trades(status: str | None = None, symbol: str | None = None) -> list[di
     return [_row_to_dict(r) for r in rows]
 
 
-def update_trade(trade_id: int, data: dict) -> dict | None:
+def update_trade(trade_id: int, data: dict) -> Optional[dict]:
     conn = _get_conn()
     existing = conn.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     if not existing:

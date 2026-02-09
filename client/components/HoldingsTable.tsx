@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface Holding {
   symbol: string;
@@ -73,7 +74,11 @@ export default function HoldingsTable({ holdings }: { holdings: Holding[] }) {
               key={h.symbol}
               className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
             >
-              <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{h.symbol}</td>
+              <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                <Link href={`/symbol/${h.symbol}`} className="text-blue-600 hover:underline dark:text-blue-400">
+                  {h.symbol}
+                </Link>
+              </td>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{h.quantity}</td>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatCurrency(h.average_price)}</td>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatCurrency(h.ltp)}</td>
