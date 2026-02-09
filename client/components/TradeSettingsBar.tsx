@@ -1,0 +1,83 @@
+"use client";
+
+interface Props {
+  capital: number;
+  riskPercent: number;
+  tradeType: "INTRADAY" | "DELIVERY";
+  onCapitalChange: (v: number) => void;
+  onRiskChange: (v: number) => void;
+  onTradeTypeChange: (v: "INTRADAY" | "DELIVERY") => void;
+}
+
+export default function TradeSettingsBar({
+  capital,
+  riskPercent,
+  tradeType,
+  onCapitalChange,
+  onRiskChange,
+  onTradeTypeChange,
+}: Props) {
+  return (
+    <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          Capital
+        </label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+            ₹
+          </span>
+          <input
+            type="number"
+            value={capital}
+            onChange={(e) => onCapitalChange(Number(e.target.value))}
+            className="w-36 rounded-lg border border-gray-300 bg-white py-1.5 pl-7 pr-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          Risk
+        </label>
+        <div className="relative">
+          <input
+            type="number"
+            step="0.1"
+            min="0.1"
+            max="10"
+            value={riskPercent}
+            onChange={(e) => onRiskChange(Number(e.target.value))}
+            className="w-20 rounded-lg border border-gray-300 bg-white py-1.5 pl-3 pr-7 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+            %
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700">
+        <button
+          onClick={() => onTradeTypeChange("INTRADAY")}
+          className={`rounded-l-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            tradeType === "INTRADAY"
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+          }`}
+        >
+          Intraday
+        </button>
+        <button
+          onClick={() => onTradeTypeChange("DELIVERY")}
+          className={`rounded-r-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            tradeType === "DELIVERY"
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+          }`}
+        >
+          Delivery
+        </button>
+      </div>
+    </div>
+  );
+}
