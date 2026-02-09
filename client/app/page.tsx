@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import DailyPicksMeta from "@/components/DailyPicksMeta";
 import DailyPicksTable from "@/components/DailyPicksTable";
-import CacheStatus from "@/components/CacheStatus";
 import LiveIndicator from "@/components/LiveIndicator";
 
 interface DailyPick {
@@ -20,6 +18,11 @@ interface DailyPick {
   high_conviction: boolean;
   news_headline: string;
   news_link: string;
+}
+
+export interface RankedPick extends DailyPick {
+  rank: number;
+  tier: "hc" | "gainer" | "volume" | "other";
 }
 
 interface Meta {
@@ -41,24 +44,6 @@ interface ScanProgress {
 }
 
 type Phase = "loading" | "snapshot" | "scanning" | "live";
-type Tab = "high_conviction" | "gainers" | "volume_leaders";
-
-const tabs: { key: Tab; label: string }[] = [
-  { key: "high_conviction", label: "High Conviction" },
-  { key: "gainers", label: "Top Gainers" },
-  { key: "volume_leaders", label: "Volume Leaders" },
-];
-
-function criteriaKeyForTab(tab: Tab): keyof DailyPick {
-  if (tab === "gainers") return "meets_gainer_criteria";
-  if (tab === "volume_leaders") return "meets_volume_leader_criteria";
-  return "high_conviction";
-}
-
-function sortKeyForTab(tab: Tab): keyof DailyPick {
-  if (tab === "volume_leaders") return "turnover";
-  return "day_change_pct";
-}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -69,7 +54,6 @@ export default function DailyPicksPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
   const [stage, setStage] = useState<string>("starting");
-  const [activeTab, setActiveTab] = useState<Tab>("gainers");
   const [lastLtpTime, setLastLtpTime] = useState<number | null>(null);
   const [flashSymbols, setFlashSymbols] = useState<Set<string>>(new Set());
   const [snapshotTime, setSnapshotTime] = useState<string | null>(null);
@@ -281,18 +265,42 @@ export default function DailyPicksPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sortedCandidates = useMemo(() => {
+  // Unified ranking: HC > Gainer > Volume Leader > Other, each sub-sorted
+  const rankedCandidates = useMemo((): RankedPick[] => {
     if (candidates.length === 0) return [];
-    const sk = sortKeyForTab(activeTab);
-    return [...candidates].sort(
-      (a, b) => (b[sk] as number) - (a[sk] as number)
-    );
-  }, [candidates, activeTab]);
 
-  const getTabPassCount = (tab: Tab): number => {
-    const ck = criteriaKeyForTab(tab);
-    return candidates.filter((c) => c[ck]).length;
-  };
+    const hc: DailyPick[] = [];
+    const gainers: DailyPick[] = [];
+    const volumeLeaders: DailyPick[] = [];
+    const other: DailyPick[] = [];
+
+    for (const c of candidates) {
+      if (c.high_conviction) {
+        hc.push(c);
+      } else if (c.meets_gainer_criteria) {
+        gainers.push(c);
+      } else if (c.meets_volume_leader_criteria) {
+        volumeLeaders.push(c);
+      } else {
+        other.push(c);
+      }
+    }
+
+    hc.sort((a, b) => b.day_change_pct - a.day_change_pct);
+    gainers.sort((a, b) => b.day_change_pct - a.day_change_pct);
+    volumeLeaders.sort((a, b) => b.turnover - a.turnover);
+    other.sort((a, b) => b.day_change_pct - a.day_change_pct);
+
+    const ranked: RankedPick[] = [];
+    let rank = 1;
+
+    for (const c of hc) ranked.push({ ...c, rank: rank++, tier: "hc" });
+    for (const c of gainers) ranked.push({ ...c, rank: rank++, tier: "gainer" });
+    for (const c of volumeLeaders) ranked.push({ ...c, rank: rank++, tier: "volume" });
+    for (const c of other) ranked.push({ ...c, rank: rank++, tier: "other" });
+
+    return ranked;
+  }, [candidates]);
 
   const hasCandidates = candidates.length > 0;
   const isScanning = phase === "scanning";
@@ -301,45 +309,64 @@ export default function DailyPicksPage() {
     if (stage === "starting") return "Starting scan...";
     if (stage === "ohlc" && scanProgress) {
       const pct = Math.round((scanProgress.current / scanProgress.total) * 100);
-      return `Scanning batch ${scanProgress.current} of ${scanProgress.total} (${pct}%)`;
+      return `Batch ${scanProgress.current}/${scanProgress.total} (${pct}%)`;
     }
-    if (stage === "volume") return "Enriching volume data...";
+    if (stage === "volume") return "Enriching volume...";
     if (stage === "news") return "Fetching news...";
     return "";
   }, [stage, scanProgress]);
 
+  const progressPct = useMemo(() => {
+    if (!scanProgress) return 0;
+    return Math.round((scanProgress.current / scanProgress.total) * 100);
+  }, [scanProgress]);
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+      <header className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             Daily Picks
           </h1>
-          <p className="mt-1 flex items-center gap-3 text-gray-500 dark:text-gray-400">
-            <span>
-              Multi-strategy scanner: quality gainers, volume leaders, and
-              high-conviction F&amp;O picks
+          {phase === "live" && <LiveIndicator lastUpdateTime={lastLtpTime} />}
+          {phase === "snapshot" && snapshotTime && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              Snapshot from {snapshotTime}
             </span>
-            {phase === "live" && <LiveIndicator lastUpdateTime={lastLtpTime} />}
-            {phase === "snapshot" && snapshotTime && (
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                Snapshot from {snapshotTime}
-              </span>
-            )}
-          </p>
+          )}
+          {meta?.high_conviction_count != null && meta.high_conviction_count > 0 && (
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              {meta.high_conviction_count} HC
+            </span>
+          )}
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isScanning}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {isScanning ? "Scanning..." : "Refresh"}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Inline scan progress */}
+          {isScanning && hasCandidates && (
+            <div className="flex items-center gap-2">
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
+              <span className="text-xs text-blue-700 dark:text-blue-300">
+                {progressLabel}
+              </span>
+              {scanProgress && (
+                <div className="h-1.5 w-20 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
+                  <div
+                    className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          <button
+            onClick={handleRefresh}
+            disabled={isScanning}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isScanning ? "Scanning..." : "Refresh"}
+          </button>
+        </div>
       </header>
-
-      <div className="mb-6">
-        <CacheStatus />
-      </div>
 
       {phase === "loading" && !hasCandidates && (
         <div className="flex items-center justify-center py-20">
@@ -352,27 +379,6 @@ export default function DailyPicksPage() {
         <div className="flex items-center justify-center py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
           <span className="ml-3 text-gray-500">{progressLabel}</span>
-        </div>
-      )}
-
-      {isScanning && hasCandidates && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 dark:border-blue-800 dark:bg-blue-950">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
-          <span className="text-sm text-blue-700 dark:text-blue-300">
-            {progressLabel}
-          </span>
-          {scanProgress && (
-            <div className="ml-auto h-2 w-32 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
-              <div
-                className="h-full rounded-full bg-blue-600 transition-all duration-300"
-                style={{
-                  width: `${Math.round(
-                    (scanProgress.current / scanProgress.total) * 100
-                  )}%`,
-                }}
-              />
-            </div>
-          )}
         </div>
       )}
 
@@ -394,48 +400,11 @@ export default function DailyPicksPage() {
       )}
 
       {hasCandidates && (
-        <div className="space-y-8">
-          {meta && <DailyPicksMeta meta={meta} stage={stage} />}
-
-          <div className="border-b border-gray-200 dark:border-gray-800">
-            <nav className="-mb-px flex gap-4">
-              {tabs.map((tab) => {
-                const active = activeTab === tab.key;
-                const passCount = getTabPassCount(tab.key);
-                const totalCount = candidates.length;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${
-                      active
-                        ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    }`}
-                  >
-                    {tab.label}
-                    <span
-                      className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                        active
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
-                          : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                      }`}
-                    >
-                      {passCount}/{totalCount}
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          <DailyPicksTable
-            results={sortedCandidates}
-            criteriaKey={criteriaKeyForTab(activeTab)}
-            stage={stage}
-            flashSymbols={flashSymbols}
-          />
-        </div>
+        <DailyPicksTable
+          results={rankedCandidates}
+          stage={stage}
+          flashSymbols={flashSymbols}
+        />
       )}
     </div>
   );

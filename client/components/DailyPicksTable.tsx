@@ -1,34 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { RankedPick } from "@/app/page";
 
-interface DailyPick {
-  symbol: string;
-  name: string;
-  ltp: number;
-  open: number;
-  day_change_pct: number;
-  volume: number;
-  turnover: number;
-  fno_eligible: boolean;
-  meets_gainer_criteria: boolean;
-  meets_volume_leader_criteria: boolean;
-  high_conviction: boolean;
-  news_headline: string;
-  news_link: string;
-}
+type SortKey = "rank" | "symbol" | "ltp" | "day_change_pct" | "volume" | "turnover";
 
-type SortKey = "symbol" | "name" | "ltp" | "day_change_pct" | "volume" | "turnover";
-
-const columns: { key: SortKey; label: string }[] = [
+const columns: { key: SortKey; label: string; numeric?: boolean }[] = [
+  { key: "rank", label: "#", numeric: true },
   { key: "symbol", label: "Symbol" },
-  { key: "name", label: "Name" },
-  { key: "ltp", label: "LTP" },
-  { key: "day_change_pct", label: "Day Change %" },
-  { key: "volume", label: "Volume" },
-  { key: "turnover", label: "Turnover" },
+  { key: "ltp", label: "LTP", numeric: true },
+  { key: "day_change_pct", label: "Chg%", numeric: true },
+  { key: "volume", label: "Vol", numeric: true },
+  { key: "turnover", label: "Turnover", numeric: true },
 ];
+
+const tierColors: Record<RankedPick["tier"], string> = {
+  hc: "bg-amber-500",
+  gainer: "bg-green-500",
+  volume: "bg-blue-500",
+  other: "bg-gray-400 dark:bg-gray-600",
+};
+
+const tierLabels: Record<RankedPick["tier"], string> = {
+  hc: "High Conviction",
+  gainer: "Gainer",
+  volume: "Volume Leader",
+  other: "",
+};
 
 function formatCompactIndian(val: number): string {
   if (val >= 1_00_00_000) return (val / 1_00_00_000).toFixed(1) + "Cr";
@@ -38,15 +37,15 @@ function formatCompactIndian(val: number): string {
 }
 
 interface Props {
-  results: DailyPick[];
-  criteriaKey: keyof DailyPick;
+  results: RankedPick[];
   stage: string;
   flashSymbols?: Set<string>;
 }
 
-export default function DailyPicksTable({ results, criteriaKey, stage, flashSymbols }: Props) {
-  const [sortKey, setSortKey] = useState<SortKey>("day_change_pct");
-  const [sortAsc, setSortAsc] = useState(false);
+export default function DailyPicksTable({ results, stage, flashSymbols }: Props) {
+  const router = useRouter();
+  const [sortKey, setSortKey] = useState<SortKey>("rank");
+  const [sortAsc, setSortAsc] = useState(true);
 
   const sorted = [...results].sort((a, b) => {
     const aVal = a[sortKey];
@@ -62,7 +61,7 @@ export default function DailyPicksTable({ results, criteriaKey, stage, flashSymb
       setSortAsc(!sortAsc);
     } else {
       setSortKey(key);
-      setSortAsc(key === "symbol" || key === "name");
+      setSortAsc(key === "symbol" || key === "rank");
     }
   };
 
@@ -93,91 +92,131 @@ export default function DailyPicksTable({ results, criteriaKey, stage, flashSymb
               <th
                 key={col.key}
                 onClick={() => handleSort(col.key)}
-                className="cursor-pointer px-4 py-3 text-left font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                className="cursor-pointer px-3 py-2 text-left font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 {col.label}
                 {sortKey === col.key && (sortAsc ? " ▲" : " ▼")}
               </th>
             ))}
-            <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">
+            <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
               News
             </th>
           </tr>
         </thead>
         <tbody>
           {sorted.map((r) => {
-            const passes = Boolean(r[criteriaKey]);
+            const isOther = r.tier === "other";
             const isFlashing = flashSymbols?.has(r.symbol) ?? false;
+            const isNeg = r.day_change_pct < 0;
             return (
               <tr
                 key={r.symbol}
-                className={`transition-all duration-300 ${
-                  passes
-                    ? "border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
-                    : "border-b border-red-200 bg-red-50/60 hover:bg-red-100/60 dark:border-red-900 dark:bg-red-950/40 dark:hover:bg-red-950/60"
+                onClick={() => router.push(`/symbol/${r.symbol}`)}
+                className={`cursor-pointer border-b transition-all duration-300 ${
+                  isOther
+                    ? "border-gray-100 text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-500 dark:hover:bg-gray-800/50"
+                    : "border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
                 }`}
               >
-                <td className="px-4 py-3">
-                  <Link
-                    href={`/symbol/${r.symbol}`}
-                    className={passes ? "font-medium text-blue-600 hover:underline dark:text-blue-400" : "font-medium text-red-800 hover:text-blue-600 dark:text-red-300 dark:hover:text-blue-400"}
-                  >
+                {/* Rank with tier dot */}
+                <td className="px-3 py-2 tabular-nums">
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className={`inline-block h-2 w-2 flex-shrink-0 rounded-full ${tierColors[r.tier]}`}
+                      title={tierLabels[r.tier]}
+                    />
+                    <span className="text-gray-500 dark:text-gray-400">{r.rank}</span>
+                  </span>
+                </td>
+
+                {/* Symbol */}
+                <td className="px-3 py-2">
+                  <span className={isOther ? "" : "font-medium text-blue-600 dark:text-blue-400"}>
                     {r.symbol}
-                  </Link>
-                  {r.fno_eligible && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/50 dark:text-green-400">
-                      F&O
-                    </span>
-                  )}
-                  {r.high_conviction && (
-                    <span className="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
-                      HC
-                    </span>
-                  )}
+                  </span>
                 </td>
-                <td className={`px-4 py-3 ${passes ? "text-gray-700 dark:text-gray-300" : "text-red-700 dark:text-red-400"}`}>
-                  {r.name}
-                </td>
+
+                {/* LTP */}
                 <td
-                  className={`px-4 py-3 transition-colors duration-500 ${
-                    isFlashing
-                      ? "bg-yellow-100 dark:bg-yellow-900/30"
-                      : ""
-                  } ${passes ? "text-gray-700 dark:text-gray-300" : "text-red-700 dark:text-red-400"}`}
+                  className={`px-3 py-2 tabular-nums transition-colors duration-500 ${
+                    isFlashing ? "bg-yellow-100 dark:bg-yellow-900/30" : ""
+                  } ${isOther ? "" : "text-gray-700 dark:text-gray-300"}`}
                 >
                   {formatCurrency(r.ltp)}
                 </td>
-                <td className={`px-4 py-3 font-medium ${passes ? "text-green-600" : "text-red-600 dark:text-red-400"}`}>
-                  +{r.day_change_pct.toFixed(2)}%
+
+                {/* Chg% */}
+                <td
+                  className={`px-3 py-2 tabular-nums font-medium ${
+                    isNeg
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-green-600 dark:text-green-400"
+                  }`}
+                >
+                  {isNeg ? "" : "+"}{r.day_change_pct.toFixed(2)}%
                 </td>
-                <td className={`px-4 py-3 ${passes ? "text-gray-700 dark:text-gray-300" : "text-red-700 dark:text-red-400"}`}>
+
+                {/* Volume */}
+                <td className={`px-3 py-2 tabular-nums ${isOther ? "" : "text-gray-700 dark:text-gray-300"}`}>
                   {!volumeEnriched || r.volume === 0 ? (
                     <span className="animate-pulse text-gray-400">&mdash;</span>
                   ) : (
                     formatCompactIndian(r.volume)
                   )}
                 </td>
-                <td className={`px-4 py-3 ${passes ? "text-gray-700 dark:text-gray-300" : "text-red-700 dark:text-red-400"}`}>
+
+                {/* Turnover */}
+                <td className={`px-3 py-2 tabular-nums ${isOther ? "" : "text-gray-700 dark:text-gray-300"}`}>
                   {!volumeEnriched || r.turnover === 0 ? (
                     <span className="animate-pulse text-gray-400">&mdash;</span>
                   ) : (
                     <>₹{formatCompactIndian(r.turnover)}</>
                   )}
                 </td>
-                <td className="max-w-xs truncate px-4 py-3">
+
+                {/* News icon */}
+                <td className="px-3 py-2">
                   {!newsEnriched && volumeEnriched ? (
-                    <span className="animate-pulse text-gray-400 text-xs">Loading...</span>
+                    <span className="animate-pulse text-gray-400 text-xs">...</span>
                   ) : r.news_link ? (
                     <a
                       href={r.news_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
+                      title={r.news_headline || "News"}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
                     >
-                      {r.news_headline || "Link"}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v11.75A2.75 2.75 0 0016.75 18h-12A2.75 2.75 0 012 15.25V3.5zm3.75 7a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zM5 5.75A.75.75 0 015.75 5h4.5a.75.75 0 01.75.75v2.5a.75.75 0 01-.75.75h-4.5A.75.75 0 015 8.25v-2.5z"
+                          clipRule="evenodd"
+                        />
+                        <path d="M16.5 6.5h-1v8.75a1.25 1.25 0 102.5 0V8a1.5 1.5 0 00-1.5-1.5z" />
+                      </svg>
                     </a>
                   ) : (
-                    <span className="text-gray-400">&mdash;</span>
+                    <span className="text-gray-300 dark:text-gray-700">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v11.75A2.75 2.75 0 0016.75 18h-12A2.75 2.75 0 012 15.25V3.5zm3.75 7a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zM5 5.75A.75.75 0 015.75 5h4.5a.75.75 0 01.75.75v2.5a.75.75 0 01-.75.75h-4.5A.75.75 0 015 8.25v-2.5z"
+                          clipRule="evenodd"
+                        />
+                        <path d="M16.5 6.5h-1v8.75a1.25 1.25 0 102.5 0V8a1.5 1.5 0 00-1.5-1.5z" />
+                      </svg>
+                    </span>
                   )}
                 </td>
               </tr>
