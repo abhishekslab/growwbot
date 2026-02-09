@@ -9,5 +9,13 @@ __pycache__/
 node_modules/
 .next/
 
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Generated snapshots
+server/daily_picks_snapshot.json
+
 # OS
 .DS_Store
