@@ -14,7 +14,7 @@ export default function TradePage({
 }) {
   const { symbol } = use(params);
   const router = useRouter();
-  const { capital, riskPercent, feeConfig, loaded, setCapital, setRiskPercent } =
+  const { capital, riskPercent, feeConfig, rrRatio, loaded, setCapital, setRiskPercent, setRrRatio, paperMode } =
     useTradeSettings();
   const [ltp, setLtp] = useState(0);
   const [ltpLoading, setLtpLoading] = useState(true);
@@ -74,6 +74,7 @@ export default function TradePage({
           fees_entry: trade.feesEntry,
           fees_exit_target: trade.feesExitTarget,
           fees_exit_sl: trade.feesExitSL,
+          is_paper: paperMode,
         }),
       });
       if (!res.ok) {
@@ -135,8 +136,10 @@ export default function TradePage({
           capital={capital}
           riskPercent={riskPercent}
           feeConfig={feeConfig}
+          rrRatio={rrRatio}
           onCapitalChange={setCapital}
           onRiskChange={setRiskPercent}
+          onRrRatioChange={setRrRatio}
           onEnterTrade={handleEnterTrade}
           entering={entering}
         />

@@ -50,6 +50,26 @@ def init_db():
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades(symbol)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_trades_status ON trades(status)")
+
+    # Migration: add order_status column (idempotent)
+    try:
+        conn.execute("ALTER TABLE trades ADD COLUMN order_status TEXT DEFAULT 'PLACED'")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+
+    # Migration: add groww_order_id column (idempotent)
+    try:
+        conn.execute("ALTER TABLE trades ADD COLUMN groww_order_id TEXT")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+
+    # Migration: add is_paper column (idempotent)
+    try:
+        conn.execute("ALTER TABLE trades ADD COLUMN is_paper INTEGER NOT NULL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_trades_is_paper ON trades(is_paper)")
+
     conn.commit()
     conn.close()
 
@@ -66,8 +86,8 @@ def create_trade(data: dict) -> dict:
         INSERT INTO trades (
             symbol, trade_type, entry_price, stop_loss, target, quantity,
             capital_used, risk_amount, fees_entry, fees_exit_target, fees_exit_sl,
-            status, entry_date, notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?)
+            status, order_status, groww_order_id, is_paper, entry_date, notes, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             data["symbol"],
@@ -81,6 +101,10 @@ def create_trade(data: dict) -> dict:
             data.get("fees_entry", 0),
             data.get("fees_exit_target", 0),
             data.get("fees_exit_sl", 0),
+            data.get("status", "OPEN"),
+            data.get("order_status", "PLACED"),
+            data.get("groww_order_id"),
+            data.get("is_paper", 0),
             data.get("entry_date", now),
             data.get("notes", ""),
             now,
@@ -101,7 +125,7 @@ def get_trade(trade_id: int) -> Optional[dict]:
     return _row_to_dict(row) if row else None
 
 
-def list_trades(status: Optional[str] = None, symbol: Optional[str] = None) -> List[dict]:
+def list_trades(status: Optional[str] = None, symbol: Optional[str] = None, is_paper: Optional[bool] = None) -> List[dict]:
     conn = _get_conn()
     query = "SELECT * FROM trades WHERE 1=1"
     params: list = []
@@ -111,6 +135,9 @@ def list_trades(status: Optional[str] = None, symbol: Optional[str] = None) -> L
     if symbol:
         query += " AND symbol LIKE ?"
         params.append(f"%{symbol}%")
+    if is_paper is not None:
+        query += " AND is_paper = ?"
+        params.append(1 if is_paper else 0)
     query += " ORDER BY created_at DESC"
     rows = conn.execute(query, params).fetchall()
     conn.close()
@@ -127,7 +154,8 @@ def update_trade(trade_id: int, data: dict) -> Optional[dict]:
     now = datetime.now(timezone.utc).isoformat()
     allowed = {
         "exit_price", "actual_pnl", "actual_fees", "status",
-        "exit_date", "notes", "stop_loss", "target",
+        "exit_date", "notes", "stop_loss", "target", "order_status",
+        "groww_order_id",
     }
     sets = ["updated_at = ?"]
     params: list = [now]
@@ -152,21 +180,43 @@ def delete_trade(trade_id: int) -> bool:
     return cursor.rowcount > 0
 
 
-def get_summary() -> dict:
+def get_realized_pnl(is_paper: Optional[bool] = None) -> dict:
     conn = _get_conn()
-    total = conn.execute("SELECT COUNT(*) FROM trades").fetchone()[0]
-    open_count = conn.execute("SELECT COUNT(*) FROM trades WHERE status = 'OPEN'").fetchone()[0]
-    won = conn.execute("SELECT COUNT(*) FROM trades WHERE status = 'WON'").fetchone()[0]
-    lost = conn.execute("SELECT COUNT(*) FROM trades WHERE status = 'LOST'").fetchone()[0]
-    closed = conn.execute("SELECT COUNT(*) FROM trades WHERE status = 'CLOSED'").fetchone()[0]
+    query = "SELECT COALESCE(SUM(actual_pnl), 0), COALESCE(SUM(actual_fees), 0), COUNT(*) FROM trades WHERE status IN ('WON', 'LOST', 'CLOSED')"
+    params: list = []
+    if is_paper is not None:
+        query += " AND is_paper = ?"
+        params.append(1 if is_paper else 0)
+    row = conn.execute(query, params).fetchone()
+    conn.close()
+    return {
+        "realized_pnl": round(row[0], 2),
+        "total_fees": round(row[1], 2),
+        "trade_count": row[2],
+    }
+
+
+def get_summary(is_paper: Optional[bool] = None) -> dict:
+    conn = _get_conn()
+    paper_clause = ""
+    params: list = []
+    if is_paper is not None:
+        paper_clause = " AND is_paper = ?"
+        params = [1 if is_paper else 0]
+
+    total = conn.execute("SELECT COUNT(*) FROM trades WHERE 1=1" + paper_clause, params).fetchone()[0]
+    open_count = conn.execute("SELECT COUNT(*) FROM trades WHERE status = 'OPEN'" + paper_clause, params).fetchone()[0]
+    won = conn.execute("SELECT COUNT(*) FROM trades WHERE status = 'WON'" + paper_clause, params).fetchone()[0]
+    lost = conn.execute("SELECT COUNT(*) FROM trades WHERE status = 'LOST'" + paper_clause, params).fetchone()[0]
+    closed = conn.execute("SELECT COUNT(*) FROM trades WHERE status = 'CLOSED'" + paper_clause, params).fetchone()[0]
 
     pnl_row = conn.execute(
-        "SELECT COALESCE(SUM(actual_pnl), 0) FROM trades WHERE status IN ('WON', 'LOST', 'CLOSED')"
+        "SELECT COALESCE(SUM(actual_pnl), 0) FROM trades WHERE status IN ('WON', 'LOST', 'CLOSED')" + paper_clause, params
     ).fetchone()
     net_pnl = pnl_row[0]
 
     fees_row = conn.execute(
-        "SELECT COALESCE(SUM(actual_fees), 0) FROM trades WHERE status IN ('WON', 'LOST', 'CLOSED')"
+        "SELECT COALESCE(SUM(actual_fees), 0) FROM trades WHERE status IN ('WON', 'LOST', 'CLOSED')" + paper_clause, params
     ).fetchone()
     total_fees = fees_row[0]
 

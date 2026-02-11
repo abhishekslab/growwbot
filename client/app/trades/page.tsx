@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import TradeSummaryCards from "@/components/TradeSummaryCards";
+import { useEffect, useState, useRef, useCallback } from "react";
+import TradeStatsBar from "@/components/TradeStatsBar";
+import ActivePositionsTable, { ActiveTrade } from "@/components/ActivePositionsTable";
 import TradeHistoryTable from "@/components/TradeHistoryTable";
-import CloseTradeModal from "@/components/CloseTradeModal";
+import SellConfirmDialog from "@/components/SellConfirmDialog";
+import GoalProgressBar from "@/components/GoalProgressBar";
+import { useTradeSettings, useCompoundedCapital } from "@/hooks/useTradeSettings";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -37,129 +40,159 @@ interface Summary {
   total_fees: number;
 }
 
-type StatusFilter = "ALL" | "OPEN" | "WON" | "LOST";
-
 export default function TradesPage() {
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const { capital, targetCapital, autoCompound, paperMode } = useTradeSettings();
+  const { realizedPnl } = useCompoundedCapital(capital, autoCompound, paperMode);
+  const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
+  const [historyTrades, setHistoryTrades] = useState<Trade[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
-  const [symbolSearch, setSymbolSearch] = useState("");
-  const [closingTrade, setClosingTrade] = useState<Trade | null>(null);
+  const [flashSymbols, setFlashSymbols] = useState<Set<string>>(new Set());
+  const [sellingTrade, setSellingTrade] = useState<ActiveTrade | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (statusFilter !== "ALL") params.set("status", statusFilter);
-    if (symbolSearch.trim()) params.set("symbol", symbolSearch.trim());
+  const prevLtpRef = useRef<Record<string, number>>({});
 
+  const fetchHistory = useCallback(() => {
+    const paperParam = `is_paper=${paperMode}`;
     Promise.all([
-      fetch(`${API_URL}/api/trades?${params}`).then((r) => r.json()),
-      fetch(`${API_URL}/api/trades/summary`).then((r) => r.json()),
-    ])
-      .then(([tradeList, sum]) => {
-        setTrades(tradeList);
-        setSummary(sum);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [statusFilter, symbolSearch]);
+      fetch(`${API_URL}/api/trades?${paperParam}`).then((r) => r.json()),
+      fetch(`${API_URL}/api/trades/summary?${paperParam}`).then((r) => r.json()),
+    ]).then(([tradeList, sum]) => {
+      // Filter out OPEN trades — only show closed in history
+      setHistoryTrades(tradeList.filter((t: Trade) => t.status !== "OPEN"));
+      setSummary(sum);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [paperMode]);
 
+  // Poll active trades every 5s
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const poll = () => {
+      fetch(`${API_URL}/api/trades/active?is_paper=${paperMode}`)
+        .then((r) => r.json())
+        .then((newTrades: ActiveTrade[]) => {
+          // Flash detection
+          const prevLtp = prevLtpRef.current;
+          const changed = new Set<string>();
+          for (const t of newTrades) {
+            if (prevLtp[t.symbol] && prevLtp[t.symbol] !== t.current_ltp) {
+              changed.add(t.symbol);
+            }
+            prevLtp[t.symbol] = t.current_ltp;
+          }
+          if (changed.size > 0) {
+            setFlashSymbols(changed);
+            setTimeout(() => setFlashSymbols(new Set()), 500);
+          }
 
-  const handleCloseTrade = async (data: {
-    id: number;
-    exitPrice: number;
-    actualPnl: number;
-    actualFees: number;
-    status: string;
-  }) => {
-    await fetch(`${API_URL}/api/trades/${data.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status: data.status,
-        exit_price: data.exitPrice,
-        actual_pnl: data.actualPnl,
-        actual_fees: data.actualFees,
-        exit_date: new Date().toISOString(),
-      }),
+          setActiveTrades(newTrades);
+        })
+        .catch(() => {});
+    };
+
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => clearInterval(interval);
+  }, [paperMode]);
+
+  // Initial fetch for history + summary
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  // Toast auto-dismiss
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const handleSell = async (tradeId: number) => {
+    const res = await fetch(`${API_URL}/api/trades/${tradeId}/close`, {
+      method: "POST",
     });
-    setClosingTrade(null);
-    fetchData();
-  };
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: "Sell failed" }));
+      throw new Error(err.detail || "Sell failed");
+    }
 
-  const handleDeleteTrade = async (id: number) => {
-    await fetch(`${API_URL}/api/trades/${id}`, { method: "DELETE" });
-    fetchData();
-  };
+    // Optimistically remove from active list
+    setActiveTrades((prev) => prev.filter((t) => t.id !== tradeId));
+    setSellingTrade(null);
+    setToast({ message: "Sell order placed successfully", type: "success" });
 
-  const statusOptions: StatusFilter[] = ["ALL", "OPEN", "WON", "LOST"];
+    // Refetch history and summary
+    fetchHistory();
+  };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Trade Ledger
-        </h1>
-        <p className="mt-1 text-gray-500 dark:text-gray-400">
-          Track your trades, win rate, and net P&L
-        </p>
-      </header>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Trades</h1>
 
-      {summary && <TradeSummaryCards summary={summary} />}
-
-      {/* Filters */}
-      <div className="mt-6 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700">
-          {statusOptions.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                s === statusOptions[0] ? "rounded-l-lg" : ""
-              } ${s === statusOptions[statusOptions.length - 1] ? "rounded-r-lg" : ""} ${
-                statusFilter === s
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+      {paperMode && (
+        <div className="mt-2 rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-800 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-200">
+          Viewing paper trades
         </div>
+      )}
 
-        <input
-          type="text"
-          placeholder="Search symbol..."
-          value={symbolSearch}
-          onChange={(e) => setSymbolSearch(e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-        />
+      {/* Goal Progress */}
+      {targetCapital > capital && (
+        <div className="mt-4">
+          <GoalProgressBar
+            baseCapital={capital}
+            realizedPnl={realizedPnl}
+            targetCapital={targetCapital}
+          />
+        </div>
+      )}
+
+      {/* Stats Bar */}
+      <div className="mt-4">
+        {summary && <TradeStatsBar summary={summary} paperMode={paperMode} />}
       </div>
 
+      {/* Active Positions */}
       <div className="mt-6">
+        <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Active Positions
+        </h2>
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
           </div>
         ) : (
-          <TradeHistoryTable
-            trades={trades}
-            onClose={(t) => setClosingTrade(t)}
-            onDelete={handleDeleteTrade}
+          <ActivePositionsTable
+            trades={activeTrades}
+            flashSymbols={flashSymbols}
+            onSell={(t) => setSellingTrade(t)}
           />
         )}
       </div>
 
-      {closingTrade && (
-        <CloseTradeModal
-          trade={closingTrade}
-          onConfirm={handleCloseTrade}
-          onCancel={() => setClosingTrade(null)}
+      {/* Trade History */}
+      <div className="mt-8">
+        <TradeHistoryTable trades={historyTrades} />
+      </div>
+
+      {/* Sell Confirm Dialog */}
+      {sellingTrade && (
+        <SellConfirmDialog
+          trade={sellingTrade}
+          onConfirm={handleSell}
+          onCancel={() => setSellingTrade(null)}
         />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`fixed bottom-4 right-4 z-50 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-lg ${
+            toast.type === "success" ? "bg-green-600" : "bg-red-600"
+          }`}
+        >
+          {toast.message}
+        </div>
       )}
     </div>
   );

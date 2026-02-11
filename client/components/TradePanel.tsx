@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useTradeSettings } from "@/hooks/useTradeSettings";
+import { useTradeSettings, useCompoundedCapital } from "@/hooks/useTradeSettings";
 import {
   calculatePositionSize,
   calculateFeeAdjustedTarget,
@@ -10,6 +10,7 @@ import { Candle } from "@/types/symbol";
 import {
   analyzeCandles,
   findMinProfitableQty,
+  applyCapitalFilter,
   AnalysisResult,
 } from "@/lib/candleAnalysis";
 
@@ -32,7 +33,8 @@ interface Props {
 }
 
 export default function TradePanel({ symbol, ltp, candles }: Props) {
-  const { capital, riskPercent, feeConfig } = useTradeSettings();
+  const { capital, riskPercent, feeConfig, rrRatio, tradeType, setTradeType, smallCapitalMode, autoCompound, maxPositions, paperMode } = useTradeSettings();
+  const { effectiveCapital, realizedPnl } = useCompoundedCapital(capital, autoCompound, paperMode);
 
   const [entryPrice, setEntryPrice] = useState(0);
   const [userEdited, setUserEdited] = useState(false);
@@ -45,6 +47,7 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
   } | null>(null);
   const [activeTrade, setActiveTrade] = useState<ActiveTrade | null>(null);
   const [closing, setClosing] = useState(false);
+  const [activePositionCount, setActivePositionCount] = useState(0);
 
   // Analysis
   const analysis: AnalysisResult | null = useMemo(() => {
@@ -73,16 +76,17 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
   // Check for active trade on mount and after buy
   useEffect(() => {
     if (!symbol) return;
-    fetch(`${API_URL}/api/trades/active`)
+    fetch(`${API_URL}/api/trades/active?is_paper=${paperMode}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((trades: ActiveTrade[]) => {
         const match = trades.find(
           (t: ActiveTrade) => t.symbol === symbol && t.status === "OPEN"
         );
         setActiveTrade(match || null);
+        setActivePositionCount(trades.length);
       })
       .catch(() => {});
-  }, [symbol, buying]);
+  }, [symbol, buying, paperMode]);
 
   // Computed values
   const slPrice = useMemo(
@@ -93,14 +97,15 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
   const position = useMemo(
     () =>
       calculatePositionSize(
-        capital,
+        effectiveCapital,
         riskPercent,
         entryPrice,
         slPrice,
-        "DELIVERY",
-        feeConfig
+        tradeType,
+        feeConfig,
+        rrRatio
       ),
-    [capital, riskPercent, entryPrice, slPrice, feeConfig]
+    [effectiveCapital, riskPercent, entryPrice, slPrice, tradeType, feeConfig, rrRatio]
   );
 
   const feeAdjusted = useMemo(
@@ -109,16 +114,33 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
         entryPrice,
         slPrice,
         position.quantity,
-        "DELIVERY",
-        feeConfig
+        tradeType,
+        feeConfig,
+        rrRatio
       ),
-    [entryPrice, slPrice, position.quantity, feeConfig]
+    [entryPrice, slPrice, position.quantity, tradeType, feeConfig, rrRatio]
   );
 
   const minProfitableQty = useMemo(() => {
     if (entryPrice <= 0 || slPrice >= entryPrice) return -1;
-    return findMinProfitableQty(entryPrice, slPrice, "DELIVERY", feeConfig);
-  }, [entryPrice, slPrice, feeConfig]);
+    return findMinProfitableQty(entryPrice, slPrice, tradeType, feeConfig, rrRatio);
+  }, [entryPrice, slPrice, tradeType, feeConfig, rrRatio]);
+
+  // Fee-aware capital filter
+  const capitalFilter = useMemo(() => {
+    if (!analysis) return null;
+    return applyCapitalFilter(
+      analysis,
+      entryPrice,
+      slPrice,
+      effectiveCapital,
+      tradeType,
+      feeConfig,
+      riskPercent,
+      rrRatio,
+      smallCapitalMode
+    );
+  }, [analysis, entryPrice, slPrice, effectiveCapital, tradeType, feeConfig, riskPercent, rrRatio, smallCapitalMode]);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -147,7 +169,8 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
           fees_entry: position.feesEntry.total,
           fees_exit_target: position.feesExitTarget.total,
           fees_exit_sl: position.feesExitSL.total,
-          trade_type: "DELIVERY",
+          trade_type: tradeType,
+          is_paper: paperMode,
         }),
       });
       const data = await res.json();
@@ -284,12 +307,44 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
     NEUTRAL: { char: "~", color: "text-gray-500 dark:text-gray-400" },
   };
 
+  const effectiveVerdict = capitalFilter?.verdict ?? analysis?.verdict ?? "WAIT";
+
   // Buy form view
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-        Buy (CNC / Delivery)
+      <h3 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+        Buy ({tradeType === "INTRADAY" ? "MIS / Intraday" : "CNC / Delivery"})
       </h3>
+
+      {paperMode && (
+        <div className="mb-3 rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs font-medium text-orange-800 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-200">
+          Paper Mode — No real money
+        </div>
+      )}
+
+      {/* MIS/CNC toggle */}
+      <div className="mb-3 flex items-center gap-1">
+        <button
+          onClick={() => setTradeType("INTRADAY")}
+          className={`rounded-l-lg px-3 py-1 text-xs font-medium transition-colors ${
+            tradeType === "INTRADAY"
+              ? "bg-blue-600 text-white"
+              : "border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+          }`}
+        >
+          MIS
+        </button>
+        <button
+          onClick={() => setTradeType("DELIVERY")}
+          className={`rounded-r-lg px-3 py-1 text-xs font-medium transition-colors ${
+            tradeType === "DELIVERY"
+              ? "bg-blue-600 text-white"
+              : "border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+          }`}
+        >
+          CNC
+        </button>
+      </div>
 
       {/* Signal Card */}
       {analysis ? (
@@ -297,9 +352,9 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
           {/* Verdict header */}
           <div className="mb-2 flex items-center justify-between">
             <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${verdictStyles[analysis.verdict]}`}
+              className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${verdictStyles[effectiveVerdict]}`}
             >
-              {analysis.verdict}
+              {effectiveVerdict}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
               Score: {analysis.score > 0 ? "+" : ""}
@@ -347,9 +402,24 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
                 }
               >
                 {analysis.volumeRatio}x avg{" "}
-                {analysis.volumeConfirmed ? "\u25B2 Strong" : analysis.volumeRatio < 0.8 ? "\u25BC Weak" : ""}
+                {analysis.volumeRatio >= 3.0 ? "\u25B2 Very Strong" : analysis.volumeConfirmed ? "\u25B2 Strong" : analysis.volumeRatio < 0.8 ? "\u25BC Weak" : ""}
               </span>
             </div>
+            {analysis.vwap > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">VWAP</span>
+                <span
+                  className={
+                    analysis.aboveVwap
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
+                  }
+                >
+                  {`\u20B9${analysis.vwap.toLocaleString("en-IN")}`}{" "}
+                  {analysis.aboveVwap ? "\u25B2 Above" : "\u25BC Below"}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Patterns */}
@@ -385,7 +455,7 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
           {/* Suggested SL and min qty */}
           <div className="mt-2 space-y-0.5 border-t border-gray-200 pt-2 text-xs dark:border-gray-600">
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Suggested SL (swing)</span>
+              <span className="text-gray-500 dark:text-gray-400">Suggested SL {analysis.atr > 0 ? "(ATR)" : "(swing)"}</span>
               <span className="font-medium text-gray-900 dark:text-gray-100">
                 {fmt(analysis.suggestedSL)}
               </span>
@@ -411,6 +481,13 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
         <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
           Need 21+ candles for analysis
         </p>
+      )}
+
+      {/* Fee warning */}
+      {capitalFilter?.feeWarning && capitalFilter.feeWarningReason && (
+        <div className="mb-3 rounded-lg border border-orange-300 bg-orange-50 p-3 text-xs text-orange-800 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-200">
+          <span className="font-semibold">Fee Warning:</span> {capitalFilter.feeWarningReason}
+        </div>
       )}
 
       {/* Entry Price */}
@@ -475,8 +552,16 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
 
       {/* Computed Display */}
       <div className="mb-3 space-y-1.5 rounded-lg bg-gray-50 p-3 text-xs dark:bg-gray-800">
+        {autoCompound && realizedPnl !== 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-500 dark:text-gray-400">Effective Capital</span>
+            <span className="font-medium text-purple-600 dark:text-purple-400">
+              {fmt(effectiveCapital)} <span className="text-[10px] text-gray-400">({realizedPnl >= 0 ? "+" : ""}{fmt(realizedPnl)})</span>
+            </span>
+          </div>
+        )}
         <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">Target (1:2 net)</span>
+          <span className="text-gray-500 dark:text-gray-400">Target (1:{rrRatio} net)</span>
           <span className="font-medium text-green-600 dark:text-green-400">
             {fmt(feeAdjusted.target)}
           </span>
@@ -520,18 +605,27 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
         </div>
       </div>
 
+      {/* Positions counter */}
+      <div className="mb-2 text-center text-xs text-gray-500 dark:text-gray-400">
+        {activePositionCount}/{maxPositions} positions
+      </div>
+
       {/* Buy Button */}
       <button
         onClick={handleBuy}
-        disabled={buying || position.quantity <= 0}
+        disabled={buying || position.quantity <= 0 || activePositionCount >= maxPositions}
         className="w-full rounded-lg bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
       >
         {buying
           ? "Placing Order..."
-          : `Buy ${position.quantity} @ ${fmt(entryPrice)}`}
+          : activePositionCount >= maxPositions
+            ? `Max ${maxPositions} positions reached`
+            : paperMode
+              ? `Paper Buy ${position.quantity} @ ${fmt(entryPrice)}`
+              : `Buy ${position.quantity} @ ${fmt(entryPrice)}`}
       </button>
 
-      {position.quantity <= 0 && entryPrice > 0 && (
+      {position.quantity <= 0 && entryPrice > 0 && activePositionCount < maxPositions && (
         <p className="mt-2 text-center text-xs text-red-500">
           Insufficient capital or SL too tight
         </p>

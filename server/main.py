@@ -3,17 +3,19 @@ import asyncio
 import json
 import time
 import logging
+import threading
 from typing import Optional
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from cache import MarketCache
 from snapshot import save_snapshot, load_snapshot
-from trades_db import init_db, create_trade, get_trade, list_trades, update_trade, delete_trade, get_summary
+from trades_db import init_db, create_trade, get_trade, list_trades, update_trade, delete_trade, get_summary, get_realized_pnl
 from symbol import fetch_candles, fetch_quote, resolve_exchange_token
+from position_monitor import PositionMonitor, compute_exit_pnl
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +23,18 @@ load_dotenv()
 
 app = FastAPI(title="Groww Portfolio API")
 market_cache = MarketCache()
+monitor = PositionMonitor()
 
 
 @app.on_event("startup")
 def startup():
     init_db()
+    monitor.start()
+
+
+@app.on_event("shutdown")
+def shutdown():
+    monitor.stop()
 
 
 class TradeCreate(BaseModel):
@@ -42,6 +51,7 @@ class TradeCreate(BaseModel):
     fees_exit_sl: float = 0
     entry_date: Optional[str] = None
     notes: str = ""
+    is_paper: bool = False
 
 
 class TradeUpdate(BaseModel):
@@ -63,30 +73,115 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled error on %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error: %s" % exc},
+    )
+
+
 _cached_client = None
 _cached_client_time = 0
-_TOKEN_TTL = 300  # re-auth every 5 minutes
+_TOKEN_TTL = 8 * 3600  # 8 hours
+_TOKEN_FILE = os.path.join(os.path.dirname(__file__) or ".", ".groww_token")
+_auth_lock = threading.Lock()
+_auth_fail_time = 0  # timestamp of last auth failure
+_AUTH_COOLDOWN = 300  # don't retry auth for 5 minutes after failure
+
+
+def _save_token(access_token):
+    """Persist token to disk so server restarts / --reload reuse it."""
+    try:
+        import tempfile
+        fd, tmp = tempfile.mkstemp(dir=os.path.dirname(_TOKEN_FILE) or ".")
+        with os.fdopen(fd, "w") as f:
+            json.dump({"token": access_token, "time": time.time()}, f)
+        os.replace(tmp, _TOKEN_FILE)
+    except Exception as e:
+        logger.warning("Could not save token to disk: %s", e)
+
+
+def _load_token():
+    """Load persisted token from disk. Returns (token, timestamp) or (None, 0)."""
+    try:
+        with open(_TOKEN_FILE, "r") as f:
+            data = json.load(f)
+        token = data["token"]
+        token_time = float(data["time"])
+        if (time.time() - token_time) < _TOKEN_TTL:
+            return token, token_time
+    except Exception:
+        pass
+    return None, 0
 
 
 def get_groww_client():
     global _cached_client, _cached_client_time
     now = time.time()
+
+    # Fast path: in-memory cached client still valid
     if _cached_client and (now - _cached_client_time) < _TOKEN_TTL:
         return _cached_client
 
-    api_key = os.getenv("API_KEY")
-    api_secret = os.getenv("API_SECRET")
-    if not api_key or not api_secret:
-        raise HTTPException(
-            status_code=500,
-            detail="API_KEY and API_SECRET must be set in server/.env",
-        )
-    from growwapi import GrowwAPI
+    with _auth_lock:
+        # Double-check after acquiring lock
+        now = time.time()
+        if _cached_client and (now - _cached_client_time) < _TOKEN_TTL:
+            return _cached_client
 
-    access_token = GrowwAPI.get_access_token(api_key, secret=api_secret)
-    _cached_client = GrowwAPI(access_token)
-    _cached_client_time = now
-    return _cached_client
+        from growwapi import GrowwAPI
+
+        # 1. Try loading persisted token from disk (survives --reload / restart)
+        saved_token, saved_time = _load_token()
+        if saved_token:
+            logger.info("Loaded persisted token from disk (age %.0fs)", now - saved_time)
+            _cached_client = GrowwAPI(saved_token)
+            _cached_client_time = saved_time
+            return _cached_client
+
+        # 2. No persisted token — must authenticate
+        #    But if auth failed recently, don't hammer the endpoint
+        if _auth_fail_time and (now - _auth_fail_time) < _AUTH_COOLDOWN:
+            wait = int(_AUTH_COOLDOWN - (now - _auth_fail_time))
+            raise HTTPException(
+                status_code=503,
+                detail="Auth rate-limited. Retry in %ds, or run: python3 get_token.py" % wait,
+            )
+
+        api_key = os.getenv("API_KEY")
+        api_secret = os.getenv("API_SECRET")
+        if not api_key or not api_secret:
+            raise HTTPException(
+                status_code=500,
+                detail="API_KEY and API_SECRET must be set in server/.env",
+            )
+
+        try:
+            access_token = GrowwAPI.get_access_token(api_key, secret=api_secret)
+            _cached_client = GrowwAPI(access_token)
+            _cached_client_time = time.time()
+            _auth_fail_time = 0  # reset on success
+            _save_token(access_token)
+            logger.info("Groww auth successful, token persisted to disk")
+            return _cached_client
+        except Exception as e:
+            logger.warning("Auth failed: %s", e)
+            _auth_fail_time = time.time()
+
+            # Return stale in-memory client if one exists
+            if _cached_client:
+                logger.warning(
+                    "Returning stale client (age %.0fs)",
+                    time.time() - _cached_client_time,
+                )
+                return _cached_client
+
+            raise HTTPException(
+                status_code=503,
+                detail="Authentication failed: %s. Run: python3 get_token.py" % e,
+            )
 
 
 @app.get("/api/holdings")
@@ -228,9 +323,16 @@ def stream_daily_picks():
                     save_snapshot(last_complete)
                 except Exception as e:
                     logger.error("Failed to save snapshot: %s", e)
+        except GeneratorExit:
+            logger.info("Daily picks stream client disconnected")
         except Exception as e:
             logger.error("SSE stream error: %s", e)
-            yield f"data: {json.dumps({'event_type': 'error', 'message': str(e)})}\n\n"
+            try:
+                yield f"data: {json.dumps({'event_type': 'error', 'message': str(e)})}\n\n"
+            except GeneratorExit:
+                pass
+        finally:
+            logger.info("Daily picks stream ended")
 
     return StreamingResponse(
         event_generator(),
@@ -266,6 +368,9 @@ def live_ltp_stream():
 
     def event_generator():
         tick = 0
+        consecutive_failures = 0
+        max_failures = 10
+        base_sleep = 3
         try:
             while True:
                 # Tier 1 every tick (~3s), Tier 2 every 5th tick (~15s)
@@ -274,12 +379,13 @@ def live_ltp_stream():
                     symbols_this_tick.extend(tier2_symbols)
 
                 if not symbols_this_tick:
-                    time.sleep(3)
+                    time.sleep(base_sleep)
                     tick += 1
                     continue
 
                 # Fetch LTP in batches of 50
                 updates = {}
+                batch_had_error = False
                 for i in range(0, len(symbols_this_tick), 50):
                     batch_syms = symbols_this_tick[i : i + 50]
                     exchange_syms = tuple(f"NSE_{s}" for s in batch_syms)
@@ -312,8 +418,12 @@ def live_ltp_stream():
                                     }
                     except Exception as e:
                         logger.warning("Live LTP batch failed: %s", e)
+                        batch_had_error = True
 
                 if updates:
+                    # Success — reset failure counter
+                    consecutive_failures = 0
+
                     # Store in cache
                     ltp_cache_map = {f"NSE_{s}": v["ltp"] for s, v in updates.items()}
                     market_cache.update_ltp_batch(ltp_cache_map)
@@ -324,11 +434,32 @@ def live_ltp_stream():
                         "timestamp": time.time(),
                     }
                     yield f"data: {json.dumps(event)}\n\n"
+                elif batch_had_error:
+                    consecutive_failures += 1
+                    logger.warning(
+                        "Live LTP: %d consecutive failures (max %d)",
+                        consecutive_failures, max_failures,
+                    )
+                    if consecutive_failures >= max_failures:
+                        logger.error(
+                            "Live LTP circuit breaker tripped after %d failures",
+                            consecutive_failures,
+                        )
+                        yield f"data: {json.dumps({'event_type': 'error', 'message': 'API unavailable — stream stopped after %d consecutive failures' % consecutive_failures})}\n\n"
+                        break
 
-                time.sleep(3)
+                # Backoff: 3s normally, up to 30s on consecutive failures
+                sleep_time = min(base_sleep * (2 ** min(consecutive_failures, 3)), 30)
+                time.sleep(sleep_time)
                 tick += 1
         except GeneratorExit:
             logger.info("Live LTP stream client disconnected")
+        except Exception as e:
+            logger.error("Live LTP stream unexpected error: %s", e)
+            try:
+                yield f"data: {json.dumps({'event_type': 'error', 'message': str(e)})}\n\n"
+            except GeneratorExit:
+                pass
 
     return StreamingResponse(
         event_generator(),
@@ -431,21 +562,84 @@ def get_ltp(symbol: str):
 @app.post("/api/trades")
 def api_create_trade(body: TradeCreate):
     data = body.model_dump(exclude_none=True)
+    if body.is_paper:
+        data["is_paper"] = 1
+        data["order_status"] = "SIMULATED"
+    else:
+        data.pop("is_paper", None)
     trade = create_trade(data)
     return trade
 
 
 @app.get("/api/trades/summary")
-def api_trades_summary():
-    return get_summary()
+def api_trades_summary(is_paper: Optional[bool] = Query(None)):
+    return get_summary(is_paper=is_paper)
+
+
+@app.get("/api/trades/realized-pnl")
+def api_realized_pnl(is_paper: Optional[bool] = Query(None)):
+    return get_realized_pnl(is_paper=is_paper)
 
 
 @app.get("/api/trades")
 def api_list_trades(
     status: Optional[str] = Query(None),
     symbol: Optional[str] = Query(None),
+    is_paper: Optional[bool] = Query(None),
 ):
-    return list_trades(status=status, symbol=symbol)
+    return list_trades(status=status, symbol=symbol, is_paper=is_paper)
+
+
+@app.get("/api/trades/active")
+def get_active_trades(is_paper: Optional[bool] = Query(None)):
+    open_trades = list_trades(status="OPEN", is_paper=is_paper)
+    if not open_trades:
+        return []
+
+    # Batch fetch LTP
+    symbols = list(set(t["symbol"] for t in open_trades))
+    ltp_map = {}  # type: dict
+    try:
+        groww = get_groww_client()
+        for i in range(0, len(symbols), 50):
+            batch = symbols[i:i + 50]
+            exchange_syms = tuple("NSE_%s" % s for s in batch)
+            try:
+                ltp_data = groww.get_ltp(
+                    exchange_trading_symbols=exchange_syms, segment="CASH"
+                )
+                if isinstance(ltp_data, dict):
+                    for key, val in ltp_data.items():
+                        sym = key.replace("NSE_", "", 1)
+                        if isinstance(val, dict):
+                            price = float(val.get("ltp", 0))
+                        else:
+                            price = float(val) if val else 0
+                        if price > 0:
+                            ltp_map[sym] = price
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    result = []
+    for t in open_trades:
+        ltp = ltp_map.get(t["symbol"], 0)
+        entry = t["entry_price"]
+        qty = t["quantity"]
+        target = t["target"]
+        sl = t["stop_loss"]
+        unrealized_pnl = (ltp - entry) * qty if ltp > 0 else 0
+        distance_to_target_pct = round((target - ltp) / ltp * 100, 2) if ltp > 0 else 0
+        distance_to_sl_pct = round((ltp - sl) / ltp * 100, 2) if ltp > 0 else 0
+        result.append({
+            **t,
+            "current_ltp": ltp,
+            "unrealized_pnl": round(unrealized_pnl, 2),
+            "distance_to_target_pct": distance_to_target_pct,
+            "distance_to_sl_pct": distance_to_sl_pct,
+        })
+    return result
 
 
 @app.get("/api/trades/{trade_id}")
@@ -473,8 +667,215 @@ def api_delete_trade(trade_id: int):
 
 
 # ------------------------------------------------------------------
+# Buy + Monitor endpoints
+# ------------------------------------------------------------------
+
+class BuyTradeRequest(BaseModel):
+    symbol: str
+    entry_price: float
+    stop_loss: float
+    target: float
+    quantity: int
+    capital_used: float
+    risk_amount: float
+    fees_entry: float = 0
+    fees_exit_target: float = 0
+    fees_exit_sl: float = 0
+    trade_type: str = "DELIVERY"
+    is_paper: bool = False
+
+
+@app.post("/api/trades/buy")
+def buy_and_monitor(body: BuyTradeRequest):
+    trade_data = {
+        "symbol": body.symbol,
+        "trade_type": body.trade_type,
+        "entry_price": body.entry_price,
+        "stop_loss": body.stop_loss,
+        "target": body.target,
+        "quantity": body.quantity,
+        "capital_used": body.capital_used,
+        "risk_amount": body.risk_amount,
+        "fees_entry": body.fees_entry,
+        "fees_exit_target": body.fees_exit_target,
+        "fees_exit_sl": body.fees_exit_sl,
+    }
+
+    # --- Paper trade path: skip broker entirely ---
+    if body.is_paper:
+        trade_data["is_paper"] = 1
+        trade_data["order_status"] = "SIMULATED"
+        trade = create_trade(trade_data)
+        logger.info("Paper trade #%s created for %s", trade["id"], body.symbol)
+        return {"order": {"status": "SIMULATED"}, "trade": trade}
+
+    # --- Real trade path ---
+    try:
+        groww = get_groww_client()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Authentication failed: %s" % e)
+
+    # 1. Place LIMIT BUY order
+    try:
+        order_result = groww.place_order(
+            validity="DAY",
+            exchange="NSE",
+            order_type="LIMIT",
+            product="CNC",
+            quantity=body.quantity,
+            segment="CASH",
+            trading_symbol=body.symbol,
+            transaction_type="BUY",
+            price=body.entry_price,
+        )
+    except Exception as e:
+        # Record the failed order attempt so it shows in trade history
+        trade_data["status"] = "FAILED"
+        trade_data["order_status"] = "REJECTED"
+        trade_data["notes"] = "BUY order failed: %s" % e
+        trade = create_trade(trade_data)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Order failed: %s" % e, "trade": trade},
+        )
+
+    # 2. Extract groww_order_id from response
+    groww_order_id = None
+    if isinstance(order_result, dict):
+        groww_order_id = order_result.get("groww_order_id") or order_result.get("orderId")
+
+    # 3. Create trade in ledger
+    trade_data["order_status"] = "PLACED"
+    trade_data["groww_order_id"] = groww_order_id
+    trade = create_trade(trade_data)
+
+    # 4. Verify order status after a brief delay (exchange may reject quickly)
+    if groww_order_id:
+        def _verify_order_status():
+            time.sleep(3)
+            try:
+                status_resp = groww.get_order_status(
+                    segment="CASH", groww_order_id=groww_order_id,
+                )
+                order_status = ""
+                if isinstance(status_resp, dict):
+                    order_status = status_resp.get("status", "").upper()
+                if order_status in ("REJECTED", "CANCELLED"):
+                    reason = ""
+                    if isinstance(status_resp, dict):
+                        reason = status_resp.get("rejection_reason", "") or status_resp.get("message", "")
+                    update_trade(trade["id"], {
+                        "status": "FAILED",
+                        "order_status": order_status,
+                        "notes": "Order %s: %s" % (order_status.lower(), reason),
+                    })
+                    logger.warning(
+                        "Order %s for trade #%s %s was %s: %s",
+                        groww_order_id, trade["id"], trade_data["symbol"],
+                        order_status, reason,
+                    )
+            except Exception as e:
+                logger.warning("Failed to verify order status for %s: %s", groww_order_id, e)
+        threading.Thread(target=_verify_order_status, daemon=True).start()
+
+    # 5. Monitor picks it up automatically (reads OPEN trades from DB)
+    return {"order": order_result, "trade": trade}
+
+
+@app.post("/api/trades/{trade_id}/close")
+def close_trade_position(trade_id: int):
+    trade = get_trade(trade_id)
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    if trade["status"] != "OPEN":
+        raise HTTPException(status_code=400, detail="Trade is not OPEN")
+
+    is_paper = trade.get("is_paper")
+
+    if not is_paper:
+        try:
+            groww = get_groww_client()
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Authentication failed: %s" % e)
+
+    # Fetch current LTP for exit price
+    exit_price = 0.0
+    try:
+        groww_for_ltp = get_groww_client() if is_paper else groww
+        exchange_symbol = "NSE_%s" % trade["symbol"]
+        ltp_data = groww_for_ltp.get_ltp(
+            exchange_trading_symbols=(exchange_symbol,), segment="CASH"
+        )
+        if isinstance(ltp_data, dict):
+            val = ltp_data.get(exchange_symbol)
+            if isinstance(val, dict):
+                exit_price = float(val.get("ltp", 0))
+            else:
+                exit_price = float(val) if val else 0
+    except Exception:
+        pass
+
+    # Place MARKET SELL (skip for paper trades)
+    if not is_paper:
+        try:
+            groww.place_order(
+                validity="DAY",
+                exchange="NSE",
+                order_type="MARKET",
+                product="CNC",
+                quantity=trade["quantity"],
+                segment="CASH",
+                trading_symbol=trade["symbol"],
+                transaction_type="SELL",
+                price=0,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="SELL order failed: %s" % e)
+
+    trade_type = trade.get("trade_type", "DELIVERY")
+    net_pnl, total_fees = compute_exit_pnl(
+        trade["entry_price"], exit_price, trade["quantity"], trade_type,
+    )
+
+    from datetime import datetime as dt, timezone as tz
+    now = dt.now(tz.utc).isoformat()
+
+    updated = update_trade(trade_id, {
+        "status": "CLOSED",
+        "exit_price": round(exit_price, 2),
+        "actual_pnl": net_pnl,
+        "actual_fees": total_fees,
+        "exit_date": now,
+    })
+    return updated
+
+
+# ------------------------------------------------------------------
 # Symbol detail endpoints
 # ------------------------------------------------------------------
+def _aggregate_candles(candles, factor):
+    # type: (list, int) -> list
+    """Aggregate 1-minute candles into N-minute candles."""
+    aggregated = []
+    for i in range(0, len(candles), factor):
+        group = candles[i:i + factor]
+        if not group:
+            break
+        aggregated.append({
+            "time": group[0]["time"],
+            "open": group[0]["open"],
+            "high": max(c["high"] for c in group),
+            "low": min(c["low"] for c in group),
+            "close": group[-1]["close"],
+            "volume": sum(c["volume"] for c in group),
+        })
+    return aggregated
+
+
 @app.get("/api/candles/{symbol}")
 def get_candles(symbol: str, interval: str = "5minute", days: int = 5):
     try:
@@ -485,7 +886,11 @@ def get_candles(symbol: str, interval: str = "5minute", days: int = 5):
         raise HTTPException(status_code=500, detail=f"Authentication failed: {e}")
 
     try:
-        candles = fetch_candles(groww, symbol, interval=interval, days=days)
+        if interval == "3minute":
+            candles = fetch_candles(groww, symbol, interval="1minute", days=days)
+            candles = _aggregate_candles(candles, 3)
+        else:
+            candles = fetch_candles(groww, symbol, interval=interval, days=days)
         return {"candles": candles}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch candles: {e}")
@@ -568,10 +973,33 @@ async def ws_ltp(websocket: WebSocket, symbol: str):
             None, feed.subscribe_ltp, instrument_list
         )
 
+        consecutive_timeouts = 0
+        max_timeouts = 10
         while True:
-            ltp_data = await asyncio.get_event_loop().run_in_executor(
-                None, feed.get_ltp
-            )
+            try:
+                ltp_data = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(None, feed.get_ltp),
+                    timeout=10,
+                )
+                consecutive_timeouts = 0
+            except asyncio.TimeoutError:
+                consecutive_timeouts += 1
+                logger.warning(
+                    "WebSocket feed.get_ltp timeout for %s (%d/%d)",
+                    symbol, consecutive_timeouts, max_timeouts,
+                )
+                if consecutive_timeouts >= max_timeouts:
+                    logger.error(
+                        "WebSocket closing for %s after %d consecutive timeouts",
+                        symbol, max_timeouts,
+                    )
+                    await websocket.send_json({
+                        "error": "Feed timed out %d times — closing" % max_timeouts,
+                    })
+                    break
+                await asyncio.sleep(1)
+                continue
+
             # Navigate nested structure: {"NSE": {"CASH": {token: {...}}}}
             price = None
             if isinstance(ltp_data, dict):
