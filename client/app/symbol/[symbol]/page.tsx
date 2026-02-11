@@ -4,7 +4,16 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import CandlestickChart from "@/components/CandlestickChart";
 import TradePanel from "@/components/TradePanel";
-import { Candle, Quote } from "@/types/symbol";
+import { Candle, Quote, Timeframe } from "@/types/symbol";
+
+const TIMEFRAME_CONFIG: Record<Timeframe, { interval: string; days: number }> = {
+  "1m": { interval: "1minute", days: 1 },
+  "3m": { interval: "3minute", days: 1 },
+  "5m": { interval: "5minute", days: 2 },
+  "15m": { interval: "15minute", days: 5 },
+  "1H": { interval: "1hour", days: 15 },
+  "1D": { interval: "1day", days: 180 },
+};
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const WS_URL = API_URL.replace(/^http/, "ws");
@@ -19,16 +28,18 @@ export default function SymbolPage() {
   const [prevLtp, setPrevLtp] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeframe, setTimeframe] = useState<Timeframe>("5m");
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const candleRefreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const quotePollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch candles (2 days for zoomed-in view)
+  // Fetch candles based on selected timeframe
   const fetchCandles = useCallback(() => {
     if (!symbol) return;
-    fetch(`${API_URL}/api/candles/${encodeURIComponent(symbol)}?interval=5minute&days=2`)
+    const { interval, days } = TIMEFRAME_CONFIG[timeframe];
+    fetch(`${API_URL}/api/candles/${encodeURIComponent(symbol)}?interval=${interval}&days=${days}`)
       .then((r) => (r.ok ? r.json() : r.json().then((e) => Promise.reject(e))))
       .then((data) => {
         setCandles(data.candles || []);
@@ -38,7 +49,7 @@ export default function SymbolPage() {
         setError(err?.detail || err?.message || "Failed to load candles");
         setLoading(false);
       });
-  }, [symbol]);
+  }, [symbol, timeframe]);
 
   // Fetch quote
   const fetchQuote = useCallback(() => {
@@ -160,6 +171,22 @@ export default function SymbolPage() {
               {change.toFixed(2)} ({isPositive ? "+" : ""}
               {changePct.toFixed(2)}%)
             </span>
+          </div>
+
+          <div className="mb-3 flex gap-2">
+            {(["1m", "3m", "5m", "15m", "1H", "1D"] as Timeframe[]).map((tf) => (
+              <button
+                key={tf}
+                onClick={() => { setTimeframe(tf); setLoading(true); }}
+                className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                  timeframe === tf
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                }`}
+              >
+                {tf}
+              </button>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

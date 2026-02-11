@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import DailyPicksTable from "@/components/DailyPicksTable";
 import LiveIndicator from "@/components/LiveIndicator";
+import { useTradeSettings } from "@/hooks/useTradeSettings";
 
 interface DailyPick {
   symbol: string;
@@ -48,6 +49,7 @@ type Phase = "loading" | "snapshot" | "scanning" | "live";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function DailyPicksPage() {
+  const { smallCapitalMode } = useTradeSettings();
   const [candidates, setCandidates] = useState<DailyPick[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,10 +59,13 @@ export default function DailyPicksPage() {
   const [lastLtpTime, setLastLtpTime] = useState<number | null>(null);
   const [flashSymbols, setFlashSymbols] = useState<Set<string>>(new Set());
   const [snapshotTime, setSnapshotTime] = useState<string | null>(null);
+  const [showTradeableOnly, setShowTradeableOnly] = useState(false);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const liveSseRef = useRef<EventSource | null>(null);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveRetriesRef = useRef(0);
+  const MAX_LIVE_RETRIES = 3;
 
   // Staleness timer — force re-render every 5s so LiveIndicator transitions
   const [, setTick] = useState(0);
@@ -105,6 +110,8 @@ export default function DailyPicksPage() {
         const data = JSON.parse(event.data);
         if (data.event_type !== "ltp_update") return;
 
+        liveRetriesRef.current = 0;
+
         const updates: Record<string, { ltp: number; day_change_pct: number }> =
           data.updates;
         const timestamp: number = data.timestamp;
@@ -144,7 +151,14 @@ export default function DailyPicksPage() {
     es.onerror = () => {
       if (es.readyState === EventSource.CLOSED) return;
       closeLiveStream();
-      // Auto-reconnect after 5s
+
+      liveRetriesRef.current += 1;
+      if (liveRetriesRef.current > MAX_LIVE_RETRIES) {
+        setPhase("snapshot");
+        setError("Live updates unavailable. Click Refresh to retry.");
+        return;
+      }
+
       setTimeout(() => {
         startLiveStream();
       }, 5000);
@@ -215,6 +229,7 @@ export default function DailyPicksPage() {
   // Refresh button: close live stream -> restart scan -> transitions back to live
   const handleRefresh = useCallback(() => {
     closeAllStreams();
+    liveRetriesRef.current = 0;
     setLastLtpTime(null);
     setFlashSymbols(new Set());
     setSnapshotTime(null);
@@ -226,6 +241,7 @@ export default function DailyPicksPage() {
     let cancelled = false;
 
     async function init() {
+      let snapshotSavedAt: number | null = null;
       try {
         const res = await fetch(`${API_URL}/api/daily-picks/snapshot`);
         if (!res.ok) throw new Error("Snapshot fetch failed");
@@ -235,6 +251,7 @@ export default function DailyPicksPage() {
           setCandidates(data.candidates);
           if (data.meta) setMeta(data.meta);
           if (data.saved_at) {
+            snapshotSavedAt = data.saved_at;
             const d = new Date(data.saved_at * 1000);
             setSnapshotTime(
               d.toLocaleTimeString("en-IN", {
@@ -252,7 +269,14 @@ export default function DailyPicksPage() {
       }
 
       if (!cancelled) {
-        startScan();
+        const ageSeconds = snapshotSavedAt
+          ? (Date.now() / 1000) - snapshotSavedAt
+          : Infinity;
+        if (ageSeconds > 300) {
+          startScan();
+        } else {
+          startLiveStream();
+        }
       }
     }
 
@@ -339,8 +363,26 @@ export default function DailyPicksPage() {
               {meta.high_conviction_count} HC
             </span>
           )}
+          {smallCapitalMode && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+              Small Capital
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          {/* Tradeable only filter */}
+          {smallCapitalMode && (
+            <button
+              onClick={() => setShowTradeableOnly(!showTradeableOnly)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                showTradeableOnly
+                  ? "bg-green-600 text-white"
+                  : "border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+              }`}
+            >
+              Tradeable only
+            </button>
+          )}
           {/* Inline scan progress */}
           {isScanning && hasCandidates && (
             <div className="flex items-center gap-2">
@@ -404,6 +446,8 @@ export default function DailyPicksPage() {
           results={rankedCandidates}
           stage={stage}
           flashSymbols={flashSymbols}
+          smallCapitalMode={smallCapitalMode}
+          showTradeableOnly={showTradeableOnly}
         />
       )}
     </div>

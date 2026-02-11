@@ -16,8 +16,10 @@ interface Props {
   capital: number;
   riskPercent: number;
   feeConfig: FeeConfig;
+  rrRatio?: number;
   onCapitalChange: (v: number) => void;
   onRiskChange: (v: number) => void;
+  onRrRatioChange?: (v: number) => void;
   onEnterTrade: (trade: {
     symbol: string;
     tradeType: string;
@@ -40,8 +42,10 @@ export default function TradeCalculator({
   capital,
   riskPercent,
   feeConfig,
+  rrRatio = 2,
   onCapitalChange,
   onRiskChange,
+  onRrRatioChange,
   onEnterTrade,
   entering = false,
 }: Props) {
@@ -63,9 +67,10 @@ export default function TradeCalculator({
         displayEntry,
         stopLoss,
         tradeType,
-        feeConfig
+        feeConfig,
+        rrRatio
       ),
-    [capital, riskPercent, displayEntry, stopLoss, tradeType, feeConfig]
+    [capital, riskPercent, displayEntry, stopLoss, tradeType, feeConfig, rrRatio]
   );
 
   const handleEnterTrade = () => {
@@ -91,9 +96,11 @@ export default function TradeCalculator({
         capital={capital}
         riskPercent={riskPercent}
         tradeType={tradeType}
+        rrRatio={rrRatio}
         onCapitalChange={onCapitalChange}
         onRiskChange={onRiskChange}
         onTradeTypeChange={setTradeType}
+        onRrRatioChange={onRrRatioChange || (() => {})}
       />
 
       {/* Price inputs */}
@@ -147,7 +154,7 @@ export default function TradeCalculator({
 
         <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
-            Target (1:2 RR)
+            Target (1:{rrRatio} RR)
           </label>
           <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {fmt(result.target)}
@@ -165,7 +172,7 @@ export default function TradeCalculator({
         <StatCard label="Risk Amount" value={fmt(result.riskAmount)} />
         <StatCard
           label="Risk/Reward"
-          value={result.riskAmount > 0 ? "1:2" : "—"}
+          value={result.riskAmount > 0 ? `1:${rrRatio}` : "—"}
         />
       </div>
 

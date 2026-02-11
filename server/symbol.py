@@ -3,12 +3,37 @@ Symbol detail helpers: historical candles, quote, exchange_token resolution.
 """
 
 import time
+import threading
 from datetime import datetime, timedelta
 
+# In-memory instrument cache — avoids duplicate API calls when the symbol page
+# fires candle + WebSocket requests simultaneously for the same symbol.
+_instrument_cache = {}  # type: dict  # "NSE:SYMBOL" -> (data, timestamp)
+_instrument_lock = threading.Lock()
+_INSTRUMENT_TTL = 3600  # 1 hour
 
-def fetch_candles(groww, symbol: str, interval: str = "5minute", days: int = 5) -> list[dict]:
-    """Fetch historical OHLCV candles for a trading symbol."""
+
+def _get_instrument(groww, symbol):
+    # type: (...) -> dict
+    """Cached wrapper around get_instrument_by_exchange_and_trading_symbol."""
+    key = "NSE:%s" % symbol
+    now = time.time()
+    with _instrument_lock:
+        entry = _instrument_cache.get(key)
+        if entry and (now - entry[1]) < _INSTRUMENT_TTL:
+            return entry[0]
+
     instrument = groww.get_instrument_by_exchange_and_trading_symbol("NSE", symbol)
+
+    with _instrument_lock:
+        _instrument_cache[key] = (instrument, time.time())
+    return instrument
+
+
+def fetch_candles(groww, symbol, interval="5minute", days=5):
+    # type: (object, str, str, int) -> list
+    """Fetch historical OHLCV candles for a trading symbol."""
+    instrument = _get_instrument(groww, symbol)
     groww_symbol = instrument.get("groww_symbol") or instrument.get("symbol") or symbol
 
     end_time = datetime.now()
@@ -48,10 +73,12 @@ def fetch_candles(groww, symbol: str, interval: str = "5minute", days: int = 5) 
                 "volume": int(c[5] or 0) if len(c) > 5 else 0,
             })
     candles.sort(key=lambda x: x["time"])
+    candles = [c for c in candles if c["open"] > 0 and c["high"] > 0 and c["low"] > 0 and c["close"] > 0]
     return candles
 
 
-def fetch_quote(groww, symbol: str) -> dict:
+def fetch_quote(groww, symbol):
+    # type: (object, str) -> dict
     """Fetch current quote for a trading symbol."""
     raw = groww.get_quote(trading_symbol=symbol, exchange="NSE", segment="CASH")
 
@@ -77,9 +104,10 @@ def fetch_quote(groww, symbol: str) -> dict:
             "close": 0, "prev_close": 0, "volume": 0, "change": 0, "change_pct": 0}
 
 
-def resolve_exchange_token(groww, symbol: str) -> str:
+def resolve_exchange_token(groww, symbol):
+    # type: (object, str) -> str
     """Look up exchange_token for GrowwFeed subscription."""
-    instrument = groww.get_instrument_by_exchange_and_trading_symbol("NSE", symbol)
+    instrument = _get_instrument(groww, symbol)
     return str(instrument.get("exchange_token", ""))
 
 

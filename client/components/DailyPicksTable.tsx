@@ -40,14 +40,22 @@ interface Props {
   results: RankedPick[];
   stage: string;
   flashSymbols?: Set<string>;
+  smallCapitalMode?: boolean;
+  showTradeableOnly?: boolean;
 }
 
-export default function DailyPicksTable({ results, stage, flashSymbols }: Props) {
+export default function DailyPicksTable({ results, stage, flashSymbols, smallCapitalMode = false, showTradeableOnly = false }: Props) {
   const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey>("rank");
   const [sortAsc, setSortAsc] = useState(true);
 
-  const sorted = [...results].sort((a, b) => {
+  const isInPriceRange = (ltp: number) => ltp >= 100 && ltp <= 300;
+
+  const filtered = showTradeableOnly && smallCapitalMode
+    ? results.filter((r) => isInPriceRange(r.ltp))
+    : results;
+
+  const sorted = [...filtered].sort((a, b) => {
     const aVal = a[sortKey];
     const bVal = b[sortKey];
     if (typeof aVal === "string" && typeof bVal === "string") {
@@ -108,11 +116,15 @@ export default function DailyPicksTable({ results, stage, flashSymbols }: Props)
             const isOther = r.tier === "other";
             const isFlashing = flashSymbols?.has(r.symbol) ?? false;
             const isNeg = r.day_change_pct < 0;
+            const inRange = isInPriceRange(r.ltp);
+            const dimmed = smallCapitalMode && !inRange;
             return (
               <tr
                 key={r.symbol}
                 onClick={() => router.push(`/symbol/${r.symbol}`)}
                 className={`cursor-pointer border-b transition-all duration-300 ${
+                  dimmed ? "opacity-50 " : ""
+                }${
                   isOther
                     ? "border-gray-100 text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-500 dark:hover:bg-gray-800/50"
                     : "border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
@@ -143,6 +155,11 @@ export default function DailyPicksTable({ results, stage, flashSymbols }: Props)
                   } ${isOther ? "" : "text-gray-700 dark:text-gray-300"}`}
                 >
                   {formatCurrency(r.ltp)}
+                  {smallCapitalMode && inRange && (
+                    <span className="ml-1 inline-block rounded bg-green-100 px-1 text-[10px] font-bold text-green-700 dark:bg-green-900 dark:text-green-300">
+                      ₹
+                    </span>
+                  )}
                 </td>
 
                 {/* Chg% */}

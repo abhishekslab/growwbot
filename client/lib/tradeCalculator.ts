@@ -74,7 +74,8 @@ export function calculatePositionSize(
   entryPrice: number,
   stopLoss: number,
   tradeType: "INTRADAY" | "DELIVERY",
-  config: FeeConfig = DEFAULT_FEE_CONFIG
+  config: FeeConfig = DEFAULT_FEE_CONFIG,
+  rrRatio: number = 2
 ): PositionResult {
   const riskPerShare = Math.abs(entryPrice - stopLoss);
   if (riskPerShare === 0) {
@@ -93,11 +94,11 @@ export function calculatePositionSize(
     return emptyResult(entryPrice);
   }
 
-  // 1:2 risk-reward target
+  // Risk-reward target
   const isLong = entryPrice > stopLoss;
   const target = isLong
-    ? entryPrice + riskPerShare * 2
-    : entryPrice - riskPerShare * 2;
+    ? entryPrice + riskPerShare * rrRatio
+    : entryPrice - riskPerShare * rrRatio;
 
   const capitalUsed = quantity * entryPrice;
   const riskAmount = quantity * riskPerShare;
@@ -145,6 +146,62 @@ export function calculateTradeExit(
     feesExit,
     totalFees: round2(totalFees),
     netPnl: round2(netPnl),
+  };
+}
+
+export interface FeeAdjustedTargetResult {
+  target: number;
+  netProfit: number;
+  netLoss: number;
+}
+
+/** Calculate a fee-adjusted target so that net profit = rrRatio× net loss (after fees). */
+export function calculateFeeAdjustedTarget(
+  entryPrice: number,
+  stopLoss: number,
+  quantity: number,
+  tradeType: "INTRADAY" | "DELIVERY",
+  config: FeeConfig = DEFAULT_FEE_CONFIG,
+  rrRatio: number = 2
+): FeeAdjustedTargetResult {
+  if (quantity <= 0 || entryPrice <= 0 || stopLoss <= 0) {
+    return { target: entryPrice, netProfit: 0, netLoss: 0 };
+  }
+
+  const riskPerShare = Math.abs(entryPrice - stopLoss);
+  if (riskPerShare === 0) {
+    return { target: entryPrice, netProfit: 0, netLoss: 0 };
+  }
+
+  const feesEntry = calculateFees(entryPrice, quantity, "BUY", tradeType, config);
+  const feesExitSL = calculateFees(stopLoss, quantity, "SELL", tradeType, config);
+  const netLoss = quantity * riskPerShare + feesEntry.total + feesExitSL.total;
+  const desiredNetProfit = rrRatio * netLoss;
+
+  // Iterative: converge on target where net profit after fees = desiredNetProfit
+  let target = entryPrice + riskPerShare * rrRatio; // naive starting point
+  for (let i = 0; i < 5; i++) {
+    const feesExitTarget = calculateFees(target, quantity, "SELL", tradeType, config);
+    const neededGross = desiredNetProfit + feesEntry.total + feesExitTarget.total;
+    const newTarget = entryPrice + neededGross / quantity;
+    if (Math.abs(newTarget - target) < 0.05) {
+      target = newTarget;
+      break;
+    }
+    target = newTarget;
+  }
+
+  // Round to nearest tick (0.05)
+  target = Math.round(target / 0.05) * 0.05;
+
+  const feesExitTarget = calculateFees(target, quantity, "SELL", tradeType, config);
+  const grossProfit = (target - entryPrice) * quantity;
+  const netProfit = grossProfit - feesEntry.total - feesExitTarget.total;
+
+  return {
+    target: round2(target),
+    netProfit: round2(netProfit),
+    netLoss: round2(-netLoss),
   };
 }
 

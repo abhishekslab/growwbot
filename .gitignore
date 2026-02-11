@@ -1,6 +1,9 @@
 # Environment files
 .env
 
+# Persisted auth token
+server/.groww_token
+
 # Python
 __pycache__/
 *.pyc

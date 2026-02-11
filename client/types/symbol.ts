@@ -1,3 +1,5 @@
+export type Timeframe = "1m" | "3m" | "5m" | "15m" | "1H" | "1D";
+
 export interface Candle {
   time: number;
   open: number;

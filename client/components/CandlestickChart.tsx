@@ -38,7 +38,7 @@ export default function CandlestickChart({ candles, liveLtp }: Props) {
         horzLines: { color: "rgba(156, 163, 175, 0.1)" },
       },
       crosshair: {
-        mode: 0,
+        mode: 1,
       },
       rightPriceScale: {
         borderColor: "rgba(156, 163, 175, 0.2)",
@@ -49,7 +49,7 @@ export default function CandlestickChart({ candles, liveLtp }: Props) {
         secondsVisible: false,
       },
       width: containerRef.current.clientWidth,
-      height: 450,
+      height: 550,
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -93,7 +93,11 @@ export default function CandlestickChart({ candles, liveLtp }: Props) {
   useEffect(() => {
     if (!candleSeriesRef.current || !volumeSeriesRef.current || candles.length === 0) return;
 
-    const candleData: CandlestickData<Time>[] = candles.map((c) => ({
+    const validCandles = candles.filter(
+      (c) => c.open > 0 && c.high > 0 && c.low > 0 && c.close > 0
+    );
+
+    const candleData: CandlestickData<Time>[] = validCandles.map((c) => ({
       time: c.time as Time,
       open: c.open,
       high: c.high,
@@ -101,7 +105,7 @@ export default function CandlestickChart({ candles, liveLtp }: Props) {
       close: c.close,
     }));
 
-    const volumeData: HistogramData<Time>[] = candles.map((c) => ({
+    const volumeData: HistogramData<Time>[] = validCandles.map((c) => ({
       time: c.time as Time,
       value: c.volume,
       color: c.close >= c.open ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)",
@@ -110,6 +114,12 @@ export default function CandlestickChart({ candles, liveLtp }: Props) {
     candleSeriesRef.current.setData(candleData);
     volumeSeriesRef.current.setData(volumeData);
     chartRef.current?.timeScale().fitContent();
+    if (candleData.length > 50) {
+      chartRef.current?.timeScale().setVisibleLogicalRange({
+        from: candleData.length - 50,
+        to: candleData.length - 1,
+      });
+    }
   }, [candles]);
 
   // Live LTP: update the last candle
