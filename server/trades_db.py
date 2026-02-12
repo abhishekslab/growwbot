@@ -70,6 +70,18 @@ def init_db():
         pass  # column already exists
     conn.execute("CREATE INDEX IF NOT EXISTS idx_trades_is_paper ON trades(is_paper)")
 
+    # Migration: add entry_snapshot column (JSON blob of analysis context at trade entry)
+    try:
+        conn.execute("ALTER TABLE trades ADD COLUMN entry_snapshot TEXT")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+
+    # Migration: add exit_trigger column (SL, TARGET, MANUAL)
+    try:
+        conn.execute("ALTER TABLE trades ADD COLUMN exit_trigger TEXT")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+
     conn.commit()
     conn.close()
 
@@ -86,8 +98,9 @@ def create_trade(data: dict) -> dict:
         INSERT INTO trades (
             symbol, trade_type, entry_price, stop_loss, target, quantity,
             capital_used, risk_amount, fees_entry, fees_exit_target, fees_exit_sl,
-            status, order_status, groww_order_id, is_paper, entry_date, notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            status, order_status, groww_order_id, is_paper, entry_date, notes,
+            entry_snapshot, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             data["symbol"],
@@ -107,6 +120,7 @@ def create_trade(data: dict) -> dict:
             data.get("is_paper", 0),
             data.get("entry_date", now),
             data.get("notes", ""),
+            data.get("entry_snapshot"),
             now,
             now,
         ),
@@ -155,7 +169,7 @@ def update_trade(trade_id: int, data: dict) -> Optional[dict]:
     allowed = {
         "exit_price", "actual_pnl", "actual_fees", "status",
         "exit_date", "notes", "stop_loss", "target", "order_status",
-        "groww_order_id",
+        "groww_order_id", "exit_trigger",
     }
     sets = ["updated_at = ?"]
     params: list = [now]
@@ -193,6 +207,126 @@ def get_realized_pnl(is_paper: Optional[bool] = None) -> dict:
         "realized_pnl": round(row[0], 2),
         "total_fees": round(row[1], 2),
         "trade_count": row[2],
+    }
+
+
+def get_learning_analytics(is_paper: Optional[bool] = None) -> dict:
+    conn = _get_conn()
+    paper_clause = ""
+    params = []  # type: list
+    if is_paper is not None:
+        paper_clause = " AND is_paper = ?"
+        params = [1 if is_paper else 0]
+
+    closed_clause = "status IN ('WON', 'LOST', 'CLOSED')"
+
+    # Win rate by confidence
+    by_confidence = []
+    try:
+        rows = conn.execute(
+            "SELECT json_extract(entry_snapshot, '$.confidence') as conf, "
+            "COUNT(*) as total, "
+            "SUM(CASE WHEN status = 'WON' THEN 1 ELSE 0 END) as won, "
+            "ROUND(AVG(actual_pnl), 2) as avg_pnl "
+            "FROM trades WHERE " + closed_clause + " AND entry_snapshot IS NOT NULL" + paper_clause +
+            " GROUP BY conf ORDER BY total DESC",
+            params,
+        ).fetchall()
+        for r in rows:
+            if r[0]:
+                by_confidence.append({
+                    "confidence": r[0], "total": r[1], "won": r[2],
+                    "win_pct": round(r[2] / r[1] * 100, 1) if r[1] > 0 else 0,
+                    "avg_pnl": r[3] or 0,
+                })
+    except Exception:
+        pass
+
+    # Win rate by verdict
+    by_verdict = []
+    try:
+        rows = conn.execute(
+            "SELECT json_extract(entry_snapshot, '$.verdict') as verd, "
+            "COUNT(*) as total, "
+            "SUM(CASE WHEN status = 'WON' THEN 1 ELSE 0 END) as won, "
+            "ROUND(AVG(actual_pnl), 2) as avg_pnl "
+            "FROM trades WHERE " + closed_clause + " AND entry_snapshot IS NOT NULL" + paper_clause +
+            " GROUP BY verd ORDER BY total DESC",
+            params,
+        ).fetchall()
+        for r in rows:
+            if r[0]:
+                by_verdict.append({
+                    "verdict": r[0], "total": r[1], "won": r[2],
+                    "win_pct": round(r[2] / r[1] * 100, 1) if r[1] > 0 else 0,
+                    "avg_pnl": r[3] or 0,
+                })
+    except Exception:
+        pass
+
+    # Win rate by trend
+    by_trend = []
+    try:
+        rows = conn.execute(
+            "SELECT json_extract(entry_snapshot, '$.trend') as tr, "
+            "COUNT(*) as total, "
+            "SUM(CASE WHEN status = 'WON' THEN 1 ELSE 0 END) as won, "
+            "ROUND(AVG(actual_pnl), 2) as avg_pnl "
+            "FROM trades WHERE " + closed_clause + " AND entry_snapshot IS NOT NULL" + paper_clause +
+            " GROUP BY tr ORDER BY total DESC",
+            params,
+        ).fetchall()
+        for r in rows:
+            if r[0]:
+                by_trend.append({
+                    "trend": r[0], "total": r[1], "won": r[2],
+                    "win_pct": round(r[2] / r[1] * 100, 1) if r[1] > 0 else 0,
+                    "avg_pnl": r[3] or 0,
+                })
+    except Exception:
+        pass
+
+    # Exit trigger distribution
+    by_exit_trigger = []
+    try:
+        rows = conn.execute(
+            "SELECT exit_trigger, COUNT(*) as total "
+            "FROM trades WHERE " + closed_clause + paper_clause +
+            " GROUP BY exit_trigger ORDER BY total DESC",
+            params,
+        ).fetchall()
+        for r in rows:
+            by_exit_trigger.append({
+                "trigger": r[0] or "UNKNOWN", "total": r[1],
+            })
+    except Exception:
+        pass
+
+    # Overreach stats (trades with target warnings)
+    overreach_stats = {"total": 0, "won": 0, "win_pct": 0}
+    try:
+        row = conn.execute(
+            "SELECT COUNT(*) as total, "
+            "SUM(CASE WHEN status = 'WON' THEN 1 ELSE 0 END) as won "
+            "FROM trades WHERE " + closed_clause + " AND entry_snapshot IS NOT NULL"
+            " AND (entry_snapshot LIKE '%TARGET_ABOVE%' OR entry_snapshot LIKE '%EXCEEDS_TYPICAL%')" + paper_clause,
+            params,
+        ).fetchone()
+        if row and row[0] > 0:
+            overreach_stats = {
+                "total": row[0], "won": row[1],
+                "win_pct": round(row[1] / row[0] * 100, 1),
+            }
+    except Exception:
+        pass
+
+    conn.close()
+    return {
+        "by_confidence": by_confidence,
+        "by_verdict": by_verdict,
+        "by_trend": by_trend,
+        "by_exit_trigger": by_exit_trigger,
+        "overreach_stats": overreach_stats,
     }
 
 

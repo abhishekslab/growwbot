@@ -276,6 +276,7 @@ class PositionMonitor:
             "actual_pnl": net_pnl,
             "actual_fees": total_fees,
             "exit_date": now,
+            "exit_trigger": triggered,
         })
         logger.info(
             "Trade #%s closed as %s — exit=%.2f pnl=%.2f fees=%.2f",
