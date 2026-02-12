@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import TradeStatsBar from "@/components/TradeStatsBar";
 import ActivePositionsTable, { ActiveTrade } from "@/components/ActivePositionsTable";
 import TradeHistoryTable from "@/components/TradeHistoryTable";
+import TradeAnalyticsDashboard from "@/components/TradeAnalyticsDashboard";
 import SellConfirmDialog from "@/components/SellConfirmDialog";
 import GoalProgressBar from "@/components/GoalProgressBar";
 import { useTradeSettings, useCompoundedCapital } from "@/hooks/useTradeSettings";
@@ -41,7 +42,7 @@ interface Summary {
 }
 
 export default function TradesPage() {
-  const { capital, targetCapital, autoCompound, paperMode } = useTradeSettings();
+  const { capital, targetCapital, autoCompound, paperMode, loaded } = useTradeSettings();
   const { realizedPnl } = useCompoundedCapital(capital, autoCompound, paperMode);
   const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
   const [historyTrades, setHistoryTrades] = useState<Trade[]>([]);
@@ -66,8 +67,18 @@ export default function TradesPage() {
     }).catch(() => setLoading(false));
   }, [paperMode]);
 
+  // Clear stale data when paperMode changes (or on initial load)
+  useEffect(() => {
+    if (!loaded) return;
+    setActiveTrades([]);
+    setHistoryTrades([]);
+    setSummary(null);
+    setLoading(true);
+  }, [loaded, paperMode]);
+
   // Poll active trades every 5s
   useEffect(() => {
+    if (!loaded) return;
     const poll = () => {
       fetch(`${API_URL}/api/trades/active?is_paper=${paperMode}`)
         .then((r) => r.json())
@@ -94,12 +105,13 @@ export default function TradesPage() {
     poll();
     const interval = setInterval(poll, 5000);
     return () => clearInterval(interval);
-  }, [paperMode]);
+  }, [loaded, paperMode]);
 
   // Initial fetch for history + summary
   useEffect(() => {
+    if (!loaded) return;
     fetchHistory();
-  }, [fetchHistory]);
+  }, [loaded, fetchHistory]);
 
   // Toast auto-dismiss
   useEffect(() => {
@@ -173,6 +185,11 @@ export default function TradesPage() {
       {/* Trade History */}
       <div className="mt-8">
         <TradeHistoryTable trades={historyTrades} />
+      </div>
+
+      {/* Trade Analytics */}
+      <div className="mt-8">
+        <TradeAnalyticsDashboard paperMode={paperMode} />
       </div>
 
       {/* Sell Confirm Dialog */}
