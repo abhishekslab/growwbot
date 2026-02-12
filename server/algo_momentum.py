@@ -7,9 +7,10 @@ Entry criteria (ALL must be true):
 - Volume > 1.5x 20-period average
 - Price above VWAP
 - Time: 9:30-15:00 IST
-- Target move (1.5x ATR) > fee breakeven + 50% margin
+- Target move (2.5x ATR) > fee breakeven + 150% margin
 
-Exit: Target = entry + 1.5 ATR, SL = entry - 1.0 ATR (handled by PositionMonitor)
+Exit: Target = entry + 2.5 ATR, SL = entry - 1.0 ATR (handled by PositionMonitor)
+Time exit: 15 min max duration (handled by AlgoEngine)
 """
 
 import math

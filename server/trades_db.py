@@ -466,6 +466,19 @@ def upsert_algo_settings(algo_id, data):
     return _row_to_dict(row)
 
 
+def get_algo_deployed_capital(algo_id, is_paper=True):
+    # type: (str, bool) -> float
+    """Sum of capital_used for OPEN trades belonging to this algo."""
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT COALESCE(SUM(capital_used), 0) FROM trades "
+        "WHERE algo_id = ? AND status = 'OPEN' AND is_paper = ?",
+        (algo_id, 1 if is_paper else 0),
+    ).fetchone()
+    conn.close()
+    return round(float(row[0]), 2)
+
+
 def get_algo_net_pnl(algo_id, is_paper=True):
     # type: (str, bool) -> float
     """Sum of actual_pnl for closed trades by algo_id (for compounding calculation)."""

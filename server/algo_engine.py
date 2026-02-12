@@ -20,6 +20,7 @@ from snapshot import load_snapshot
 from trades_db import (
     create_trade, list_trades, update_trade, save_algo_signal,
     get_algo_settings, upsert_algo_settings, get_algo_net_pnl,
+    get_algo_deployed_capital,
 )
 
 logger = logging.getLogger(__name__)
@@ -133,16 +134,20 @@ class AlgoEngine:
 
     def get_effective_capital(self, algo_id):
         # type: (str) -> float
-        """Compute effective capital for an algo, applying compounding if enabled."""
+        """Compute effective capital for an algo, subtracting deployed capital."""
         settings = get_algo_settings(algo_id)
         if not settings:
-            return self._config.get("capital", 100000)
-        base_capital = settings.get("capital", 100000)
-        if not settings.get("compounding"):
-            return base_capital
-        net_pnl = get_algo_net_pnl(algo_id, is_paper=True)
-        # Cap at base so drawdowns don't reduce below starting capital
-        return max(base_capital, base_capital + net_pnl)
+            total = self._config.get("capital", 100000)
+        else:
+            base_capital = settings.get("capital", 100000)
+            if settings.get("compounding"):
+                net_pnl = get_algo_net_pnl(algo_id, is_paper=True)
+                # Cap at base so drawdowns don't reduce below starting capital
+                total = max(base_capital, base_capital + net_pnl)
+            else:
+                total = base_capital
+        deployed = get_algo_deployed_capital(algo_id, is_paper=True)
+        return max(0, total - deployed)
 
     def update_algo_settings(self, algo_id, data):
         # type: (str, dict) -> Optional[dict]
@@ -164,6 +169,7 @@ class AlgoEngine:
             base_capital = settings.get("capital", self._config.get("capital", 100000))
             compounding = bool(settings.get("compounding", 0))
             effective_capital = self.get_effective_capital(algo_id)
+            deployed = get_algo_deployed_capital(algo_id, is_paper=True)
             compounding_pnl = get_algo_net_pnl(algo_id, is_paper=True) if compounding else 0
             algos.append({
                 "algo_id": algo.ALGO_ID,
@@ -174,6 +180,7 @@ class AlgoEngine:
                 "risk_percent": settings.get("risk_percent", self._config.get("risk_percent", 1)),
                 "compounding": compounding,
                 "effective_capital": effective_capital,
+                "deployed_capital": deployed,
                 "compounding_pnl": compounding_pnl,
             })
         return {
@@ -258,12 +265,55 @@ class AlgoEngine:
         if not filtered:
             filtered = candidates[:20]  # fallback: top 20
 
-        # Batch fetch LTP
-        symbols = [c["symbol"] for c in filtered]
-        ltp_map = self._fetch_ltp_batch(symbols)
-
-        # Get current open positions for all algos
+        # Batch fetch LTP (include open position symbols too)
         open_positions = list_trades(status="OPEN", is_paper=True)
+        open_symbols = list(set(
+            t["symbol"] for t in open_positions if t.get("algo_id")
+        ))
+        all_symbols = list(set([c["symbol"] for c in filtered] + open_symbols))
+        ltp_map = self._fetch_ltp_batch(all_symbols)
+
+        # Time-based exit: close stale algo trades exceeding max duration
+        max_duration = self._config.get("max_trade_duration_minutes", 15)
+        now_utc = datetime.now(timezone.utc)
+        stale_closed = False
+        for trade in open_positions:
+            if not trade.get("algo_id"):
+                continue
+            try:
+                entry_dt = datetime.fromisoformat(
+                    trade["entry_date"].replace("Z", "+00:00")
+                )
+                age_minutes = (now_utc - entry_dt).total_seconds() / 60
+            except Exception:
+                continue
+            if age_minutes >= max_duration:
+                ltp = ltp_map.get(trade["symbol"])
+                if not ltp or ltp <= 0:
+                    continue
+                net_pnl, total_fees = compute_exit_pnl(
+                    trade["entry_price"], ltp, trade["quantity"], "INTRADAY",
+                )
+                status = "WON" if net_pnl > 0 else "LOST"
+                update_trade(trade["id"], {
+                    "status": status,
+                    "exit_price": round(ltp, 2),
+                    "actual_pnl": net_pnl,
+                    "actual_fees": total_fees,
+                    "exit_date": now_utc.isoformat(),
+                    "exit_trigger": "TIME_EXIT",
+                })
+                self._log_signal(
+                    trade["algo_id"], trade["symbol"], "TIME_EXIT",
+                    "Trade exceeded %d min duration limit (age=%.1f min, pnl=%.2f)"
+                    % (max_duration, age_minutes, net_pnl),
+                    trade_id=trade["id"],
+                )
+                stale_closed = True
+
+        # Re-fetch open positions if any were closed
+        if stale_closed:
+            open_positions = list_trades(status="OPEN", is_paper=True)
         total_open = len([p for p in open_positions if p.get("algo_id")])
 
         max_total = self._config.get("max_total_positions", 6)
@@ -350,6 +400,15 @@ class AlgoEngine:
 
             capital_used = signal.entry_price * signal.quantity
             risk_amount = abs(signal.entry_price - signal.stop_loss) * signal.quantity
+
+            # Capital guard: reject if trade exceeds available capital
+            available = self.get_effective_capital(signal.algo_id)
+            if capital_used > available:
+                logger.warning(
+                    "ALGO REJECTED: %s %s capital_used=%.0f > available=%.0f",
+                    signal.algo_id, signal.symbol, capital_used, available,
+                )
+                return None
 
             trade_data = {
                 "symbol": signal.symbol,
