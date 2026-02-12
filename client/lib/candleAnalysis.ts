@@ -2,6 +2,38 @@ import { Candle } from "@/types/symbol";
 import { calculateFees } from "@/lib/tradeCalculator";
 import { FeeConfig, DEFAULT_FEE_CONFIG } from "@/lib/feeDefaults";
 
+// ── Trade Guardrail Types ───────────────────────────────────────────
+
+export interface TradeWarning {
+  id: string;
+  severity: "CAUTION" | "WARNING" | "DANGER";
+  title: string;
+  detail: string;
+}
+
+export interface EntrySnapshot {
+  verdict: string;
+  score: number;
+  confidence: string;
+  trend: string;
+  rsi: number;
+  rsiZone: string;
+  volumeRatio: number;
+  volumeConfirmed: boolean;
+  vwap: number;
+  aboveVwap: boolean;
+  atr: number;
+  patterns: string[];
+  reasons: string[];
+  dayChangePct: number;
+  sessionHigh: number;
+  entryPrice: number;
+  target: number;
+  stopLoss: number;
+  warnings: string[];
+  warningDetails: string[];
+}
+
 // ── Interfaces ──────────────────────────────────────────────────────
 
 export interface DetectedPattern {
@@ -87,7 +119,7 @@ export function calculateRSI(
 
   const current = values[values.length - 1] ?? 50;
   const zone: "OVERSOLD" | "NEUTRAL" | "OVERBOUGHT" =
-    current < 30 ? "OVERSOLD" : current > 70 ? "OVERBOUGHT" : "NEUTRAL";
+    current < 30 ? "OVERSOLD" : current > 65 ? "OVERBOUGHT" : "NEUTRAL";
 
   return { values, current: Math.round(current * 10) / 10, zone };
 }
@@ -521,17 +553,26 @@ export function analyzeCandles(candles: Candle[], ltp?: number): AnalysisResult 
       score -= 5;
       reasons.push({ label: `RSI ${rsi} (weak)`, sentiment: "BEARISH" });
     }
-  } else if (rsi <= 70) {
+  } else if (rsi <= 65) {
     score += 10;
     reasons.push({ label: `RSI ${rsi} (healthy)`, sentiment: "BULLISH" });
+  } else if (rsi <= 75) {
+    score -= 15;
+    reasons.push({ label: `RSI ${rsi} (approaching overbought)`, sentiment: "BEARISH" });
+  } else if (rsi <= 85) {
+    score -= 30;
+    reasons.push({ label: `RSI ${rsi} (overbought — high reversion risk)`, sentiment: "BEARISH" });
   } else {
-    // Overbought — reduced penalty, strong trends can sustain high RSI
-    score -= 10;
-    reasons.push({ label: `RSI ${rsi} (overbought)`, sentiment: "BEARISH" });
+    score -= 40;
+    reasons.push({ label: `RSI ${rsi} (extremely overbought — pullback imminent)`, sentiment: "BEARISH" });
   }
 
-  // ── Volume (tiered: 3x, 2x, <0.8x) ──────────────────────────────
-  if (vol.ratio >= 3.0) {
+  // ── Volume (tiered: 3x, 2x, <0.8x) — flipped when overbought ───
+  if (rsi > 70 && vol.ratio >= 2.0) {
+    // High volume + overbought = likely distribution, not accumulation
+    score -= 10;
+    reasons.push({ label: `Volume ${vol.ratio}x avg + RSI ${rsi} (distribution signal)`, sentiment: "BEARISH" });
+  } else if (vol.ratio >= 3.0) {
     score += 20;
     reasons.push({ label: `Volume ${vol.ratio}x avg (very strong)`, sentiment: "BULLISH" });
   } else if (vol.ratio >= 2.0) {
@@ -587,9 +628,17 @@ export function analyzeCandles(candles: Candle[], ltp?: number): AnalysisResult 
   // Clamp
   score = Math.max(-100, Math.min(100, score));
 
-  // Verdict
-  const verdict: "BUY" | "WAIT" | "AVOID" =
+  // Verdict — with hard overbought gate
+  let verdict: "BUY" | "WAIT" | "AVOID" =
     score >= 30 ? "BUY" : score >= -10 ? "WAIT" : "AVOID";
+
+  if (rsi > 85) {
+    verdict = "AVOID";
+    reasons.push({ label: `RSI ${rsi} > 85 — verdict forced to AVOID`, sentiment: "BEARISH" });
+  } else if (rsi > 75 && verdict === "BUY") {
+    verdict = "WAIT";
+    reasons.push({ label: `RSI ${rsi} > 75 — verdict capped at WAIT`, sentiment: "BEARISH" });
+  }
 
   // Confidence
   const absScore = Math.abs(score);
@@ -602,8 +651,8 @@ export function analyzeCandles(candles: Candle[], ltp?: number): AnalysisResult 
 
   let suggestedSL: number;
   if (atr > 0) {
-    // Primary: ATR × 1.5 below entry
-    const atrSL = Math.round((entry - atr * 1.5) * 100) / 100;
+    // Primary: ATR × 2.0 below entry (wider SL avoids noise stops)
+    const atrSL = Math.round((entry - atr * 2.0) * 100) / 100;
     // Floor: never place SL above the swing low
     suggestedSL = Math.min(atrSL, swingLow);
   } else {
@@ -633,5 +682,100 @@ export function analyzeCandles(candles: Candle[], ltp?: number): AnalysisResult 
     reasons,
     suggestedEntry: Math.round(entry * 100) / 100,
     suggestedSL,
+  };
+}
+
+// ── Trade Guardrails ────────────────────────────────────────────────
+
+export function computeTradeWarnings(
+  entryPrice: number,
+  target: number,
+  stopLoss: number,
+  sessionHigh: number,
+  dayChangePct: number,
+  atr: number,
+  isFnO: boolean
+): TradeWarning[] {
+  const warnings: TradeWarning[] = [];
+
+  // 1. Target above session high
+  if (sessionHigh > 0 && target > sessionHigh) {
+    warnings.push({
+      id: "TARGET_ABOVE_SESSION_HIGH",
+      severity: "WARNING",
+      title: "Target above session high",
+      detail: `Target ₹${target.toFixed(2)} is above today's high ₹${sessionHigh.toFixed(2)}. Price may face resistance.`,
+    });
+  }
+
+  // 2. Exceeds typical range
+  const targetPct = entryPrice > 0 ? ((target - entryPrice) / entryPrice) * 100 : 0;
+  const totalMove = Math.abs(dayChangePct) + Math.abs(targetPct);
+  const threshold = isFnO ? 4 : 6;
+  if (totalMove > threshold) {
+    warnings.push({
+      id: "EXCEEDS_TYPICAL_RANGE",
+      severity: totalMove > threshold * 1.5 ? "DANGER" : "WARNING",
+      title: "Move exceeds typical range",
+      detail: `Total predicted move ${totalMove.toFixed(1)}% (day ${dayChangePct.toFixed(1)}% + target ${targetPct.toFixed(1)}%) exceeds ${threshold}% typical for ${isFnO ? "F&O" : "non-F&O"} stocks.`,
+    });
+  }
+
+  // 3. Large-cap overextended (F&O already up significantly)
+  if (isFnO && dayChangePct > 3) {
+    warnings.push({
+      id: "LARGE_CAP_OVEREXTENDED",
+      severity: dayChangePct > 5 ? "DANGER" : "CAUTION",
+      title: "Already extended",
+      detail: `F&O stock already up ${dayChangePct.toFixed(1)}% today. Late entries carry reversion risk.`,
+    });
+  }
+
+  // 4. Target beyond 3x ATR
+  if (atr > 0) {
+    const targetDist = Math.abs(target - entryPrice);
+    if (targetDist > 3 * atr) {
+      warnings.push({
+        id: "TARGET_BEYOND_ATR",
+        severity: "CAUTION",
+        title: "Target beyond 3× ATR",
+        detail: `Target distance ₹${targetDist.toFixed(2)} exceeds 3× ATR (₹${(3 * atr).toFixed(2)}). May not reach in one session.`,
+      });
+    }
+  }
+
+  return warnings;
+}
+
+export function buildEntrySnapshot(
+  analysis: AnalysisResult,
+  entryPrice: number,
+  target: number,
+  stopLoss: number,
+  dayChangePct: number,
+  sessionHigh: number,
+  warnings: TradeWarning[]
+): EntrySnapshot {
+  return {
+    verdict: analysis.verdict,
+    score: analysis.score,
+    confidence: analysis.confidence,
+    trend: analysis.trend,
+    rsi: analysis.rsi,
+    rsiZone: analysis.rsiZone,
+    volumeRatio: analysis.volumeRatio,
+    volumeConfirmed: analysis.volumeConfirmed,
+    vwap: analysis.vwap,
+    aboveVwap: analysis.aboveVwap,
+    atr: analysis.atr,
+    patterns: analysis.patterns.map((p) => p.displayName),
+    reasons: analysis.reasons.map((r) => r.label),
+    dayChangePct,
+    sessionHigh,
+    entryPrice,
+    target,
+    stopLoss,
+    warnings: warnings.map((w) => w.id),
+    warningDetails: warnings.map((w) => `${w.severity}: ${w.title}`),
   };
 }
