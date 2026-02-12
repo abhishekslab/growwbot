@@ -42,9 +42,10 @@ interface Props {
   flashSymbols?: Set<string>;
   smallCapitalMode?: boolean;
   showTradeableOnly?: boolean;
+  analysisPhase?: "idle" | "running" | "done";
 }
 
-export default function DailyPicksTable({ results, stage, flashSymbols, smallCapitalMode = false, showTradeableOnly = false }: Props) {
+export default function DailyPicksTable({ results, stage, flashSymbols, smallCapitalMode = false, showTradeableOnly = false, analysisPhase = "idle" }: Props) {
   const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey>("rank");
   const [sortAsc, setSortAsc] = useState(true);
@@ -52,7 +53,7 @@ export default function DailyPicksTable({ results, stage, flashSymbols, smallCap
   const isInPriceRange = (ltp: number) => ltp >= 100 && ltp <= 300;
 
   const filtered = showTradeableOnly && smallCapitalMode
-    ? results.filter((r) => isInPriceRange(r.ltp))
+    ? results.filter((r) => isInPriceRange(r.ltp) && r.analysisVerdict !== "AVOID")
     : results;
 
   const sorted = [...filtered].sort((a, b) => {
@@ -106,6 +107,9 @@ export default function DailyPicksTable({ results, stage, flashSymbols, smallCap
                 {sortKey === col.key && (sortAsc ? " ▲" : " ▼")}
               </th>
             ))}
+            <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
+              Signal
+            </th>
             <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
               News
             </th>
@@ -189,6 +193,36 @@ export default function DailyPicksTable({ results, stage, flashSymbols, smallCap
                   ) : (
                     <>₹{formatCompactIndian(r.turnover)}</>
                   )}
+                </td>
+
+                {/* Signal */}
+                <td className="px-3 py-2">
+                  {r.analysisVerdict === "BUY" ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-900 dark:text-green-300">
+                        BUY
+                      </span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{r.analysisScore}</span>
+                    </span>
+                  ) : r.analysisVerdict === "WAIT" ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="rounded bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                        WAIT
+                      </span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{r.analysisScore}</span>
+                    </span>
+                  ) : r.analysisVerdict === "AVOID" ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-900 dark:text-red-300">
+                        AVOID
+                      </span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{r.analysisScore}</span>
+                    </span>
+                  ) : analysisPhase === "running" ? (
+                    <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-gray-300 dark:bg-gray-600" />
+                  ) : analysisPhase === "done" ? (
+                    <span className="text-gray-300 dark:text-gray-700">&mdash;</span>
+                  ) : null}
                 </td>
 
                 {/* News icon */}

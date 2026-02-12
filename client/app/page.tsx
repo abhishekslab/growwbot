@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import DailyPicksTable from "@/components/DailyPicksTable";
 import LiveIndicator from "@/components/LiveIndicator";
 import { useTradeSettings } from "@/hooks/useTradeSettings";
+import { analyzeCandles } from "@/lib/candleAnalysis";
 
 interface DailyPick {
   symbol: string;
@@ -24,6 +25,8 @@ interface DailyPick {
 export interface RankedPick extends DailyPick {
   rank: number;
   tier: "hc" | "gainer" | "volume" | "other";
+  analysisVerdict?: "BUY" | "WAIT" | "AVOID";
+  analysisScore?: number;
 }
 
 interface Meta {
@@ -60,6 +63,8 @@ export default function DailyPicksPage() {
   const [flashSymbols, setFlashSymbols] = useState<Set<string>>(new Set());
   const [snapshotTime, setSnapshotTime] = useState<string | null>(null);
   const [showTradeableOnly, setShowTradeableOnly] = useState(false);
+  const [analysisMap, setAnalysisMap] = useState<Record<string, { verdict: string; score: number; trend: string; rsi: number; volumeRatio: number }>>({});
+  const [analysisPhase, setAnalysisPhase] = useState<"idle" | "running" | "done">("idle");
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const liveSseRef = useRef<EventSource | null>(null);
@@ -96,6 +101,53 @@ export default function DailyPicksPage() {
       flashTimeoutRef.current = null;
     }
   }, [closeScanStream, closeLiveStream]);
+
+  // Batch analysis: fetch 5min candles for top candidates and run analyzeCandles()
+  // Prioritizes HC > gainer > volume tier stocks so they get analyzed first
+  const runBatchAnalysis = useCallback(async (picks: DailyPick[]) => {
+    setAnalysisPhase("running");
+
+    // Sort by tier priority so we analyze the best candidates first
+    const tierPriority = (c: DailyPick): number => {
+      if (c.high_conviction) return 0;
+      if (c.meets_gainer_criteria) return 1;
+      if (c.meets_volume_leader_criteria) return 2;
+      return 3;
+    };
+    const sorted = [...picks].sort((a, b) => tierPriority(a) - tierPriority(b));
+
+    // Analyze all non-"other" tier stocks, plus top 10 "other" tier (max ~40)
+    const nonOther = sorted.filter(c => tierPriority(c) < 3);
+    const otherTop = sorted.filter(c => tierPriority(c) === 3).slice(0, 10);
+    const top = [...nonOther, ...otherTop];
+
+    const results: Record<string, { verdict: string; score: number; trend: string; rsi: number; volumeRatio: number }> = {};
+
+    for (let i = 0; i < top.length; i += 5) {
+      const batch = top.slice(i, i + 5);
+      const promises = batch.map(async (c) => {
+        try {
+          const res = await fetch(`${API_URL}/api/candles/${encodeURIComponent(c.symbol)}?interval=5minute&days=2`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const candles = data.candles || [];
+          if (candles.length >= 21) {
+            const analysis = analyzeCandles(candles, c.ltp);
+            results[c.symbol] = {
+              verdict: analysis.verdict,
+              score: analysis.score,
+              trend: analysis.trend,
+              rsi: analysis.rsi,
+              volumeRatio: analysis.volumeRatio,
+            };
+          }
+        } catch { /* skip failed */ }
+      });
+      await Promise.all(promises);
+      setAnalysisMap(prev => ({ ...prev, ...results }));
+    }
+    setAnalysisPhase("done");
+  }, []);
 
   // Phase 3: Start live LTP stream
   const startLiveStream = useCallback(() => {
@@ -210,6 +262,10 @@ export default function DailyPicksPage() {
         } else if (data.event_type === "complete") {
           setStage("done");
           closeScanStream();
+          // Run candle analysis on top candidates
+          if (data.candidates && data.candidates.length > 0) {
+            runBatchAnalysis(data.candidates);
+          }
           // Transition to phase 3: live LTP
           startLiveStream();
         }
@@ -224,7 +280,7 @@ export default function DailyPicksPage() {
       setPhase(candidates.length > 0 ? "snapshot" : "loading");
       closeScanStream();
     };
-  }, [closeScanStream, closeLiveStream, startLiveStream, candidates.length]);
+  }, [closeScanStream, closeLiveStream, startLiveStream, runBatchAnalysis, candidates.length]);
 
   // Refresh button: close live stream -> restart scan -> transitions back to live
   const handleRefresh = useCallback(() => {
@@ -233,6 +289,8 @@ export default function DailyPicksPage() {
     setLastLtpTime(null);
     setFlashSymbols(new Set());
     setSnapshotTime(null);
+    setAnalysisMap({});
+    setAnalysisPhase("idle");
     startScan();
   }, [closeAllStreams, startScan]);
 
@@ -242,12 +300,14 @@ export default function DailyPicksPage() {
 
     async function init() {
       let snapshotSavedAt: number | null = null;
+      let snapshotCandidates: DailyPick[] = [];
       try {
         const res = await fetch(`${API_URL}/api/daily-picks/snapshot`);
         if (!res.ok) throw new Error("Snapshot fetch failed");
         const data = await res.json();
 
         if (!cancelled && data.candidates && data.candidates.length > 0) {
+          snapshotCandidates = data.candidates;
           setCandidates(data.candidates);
           if (data.meta) setMeta(data.meta);
           if (data.saved_at) {
@@ -275,6 +335,10 @@ export default function DailyPicksPage() {
         if (ageSeconds > 300) {
           startScan();
         } else {
+          // Snapshot is fresh — run analysis on it and start live LTP
+          if (snapshotCandidates.length > 0) {
+            runBatchAnalysis(snapshotCandidates);
+          }
           startLiveStream();
         }
       }
@@ -290,6 +354,7 @@ export default function DailyPicksPage() {
   }, []);
 
   // Unified ranking: HC > Gainer > Volume Leader > Other, each sub-sorted
+  // When analysis results are available, BUY verdicts sort first within each tier
   const rankedCandidates = useMemo((): RankedPick[] => {
     if (candidates.length === 0) return [];
 
@@ -310,21 +375,59 @@ export default function DailyPicksPage() {
       }
     }
 
-    hc.sort((a, b) => b.day_change_pct - a.day_change_pct);
-    gainers.sort((a, b) => b.day_change_pct - a.day_change_pct);
-    volumeLeaders.sort((a, b) => b.turnover - a.turnover);
-    other.sort((a, b) => b.day_change_pct - a.day_change_pct);
+    const hasAnalysis = Object.keys(analysisMap).length > 0;
+
+    // Verdict priority: BUY=0, WAIT=1, unanalyzed=2, AVOID=3
+    const verdictPriority = (symbol: string): number => {
+      const a = analysisMap[symbol];
+      if (!a) return 2; // unanalyzed sorts below WAIT
+      if (a.verdict === "BUY") return 0;
+      if (a.verdict === "WAIT") return 1;
+      return 3; // AVOID
+    };
+
+    const sortWithAnalysis = (arr: DailyPick[], fallbackSort: (a: DailyPick, b: DailyPick) => number) => {
+      if (!hasAnalysis) {
+        arr.sort(fallbackSort);
+        return;
+      }
+      arr.sort((a, b) => {
+        const vp = verdictPriority(a.symbol) - verdictPriority(b.symbol);
+        if (vp !== 0) return vp;
+        // Within same verdict: sort by analysis score desc, then fallback
+        const aScore = analysisMap[a.symbol]?.score ?? -999;
+        const bScore = analysisMap[b.symbol]?.score ?? -999;
+        if (aScore !== bScore) return bScore - aScore;
+        return fallbackSort(a, b);
+      });
+    };
+
+    sortWithAnalysis(hc, (a, b) => b.day_change_pct - a.day_change_pct);
+    sortWithAnalysis(gainers, (a, b) => b.day_change_pct - a.day_change_pct);
+    sortWithAnalysis(volumeLeaders, (a, b) => b.turnover - a.turnover);
+    sortWithAnalysis(other, (a, b) => b.day_change_pct - a.day_change_pct);
 
     const ranked: RankedPick[] = [];
     let rank = 1;
 
-    for (const c of hc) ranked.push({ ...c, rank: rank++, tier: "hc" });
-    for (const c of gainers) ranked.push({ ...c, rank: rank++, tier: "gainer" });
-    for (const c of volumeLeaders) ranked.push({ ...c, rank: rank++, tier: "volume" });
-    for (const c of other) ranked.push({ ...c, rank: rank++, tier: "other" });
+    const annotate = (c: DailyPick, tier: RankedPick["tier"]): RankedPick => {
+      const a = analysisMap[c.symbol];
+      return {
+        ...c,
+        rank: rank++,
+        tier,
+        analysisVerdict: a?.verdict as RankedPick["analysisVerdict"],
+        analysisScore: a?.score,
+      };
+    };
+
+    for (const c of hc) ranked.push(annotate(c, "hc"));
+    for (const c of gainers) ranked.push(annotate(c, "gainer"));
+    for (const c of volumeLeaders) ranked.push(annotate(c, "volume"));
+    for (const c of other) ranked.push(annotate(c, "other"));
 
     return ranked;
-  }, [candidates]);
+  }, [candidates, analysisMap]);
 
   const hasCandidates = candidates.length > 0;
   const isScanning = phase === "scanning";
@@ -366,6 +469,19 @@ export default function DailyPicksPage() {
           {smallCapitalMode && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900 dark:text-amber-300">
               Small Capital
+            </span>
+          )}
+          {analysisPhase === "running" && (
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 animate-spin rounded-full border-2 border-green-300 border-t-green-600" />
+              <span className="text-xs text-green-700 dark:text-green-300">
+                Analyzing signals...
+              </span>
+            </div>
+          )}
+          {analysisPhase === "done" && (
+            <span className="text-xs text-green-600 dark:text-green-400">
+              {Object.values(analysisMap).filter(a => a.verdict === "BUY").length} BUY signals
             </span>
           )}
         </div>
@@ -448,6 +564,7 @@ export default function DailyPicksPage() {
           flashSymbols={flashSymbols}
           smallCapitalMode={smallCapitalMode}
           showTradeableOnly={showTradeableOnly}
+          analysisPhase={analysisPhase}
         />
       )}
     </div>
