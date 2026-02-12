@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from cache import MarketCache
 from snapshot import save_snapshot, load_snapshot
-from trades_db import init_db, create_trade, get_trade, list_trades, update_trade, delete_trade, get_summary, get_realized_pnl
+from trades_db import init_db, create_trade, get_trade, list_trades, update_trade, delete_trade, get_summary, get_realized_pnl, get_learning_analytics
 from symbol import fetch_candles, fetch_quote, resolve_exchange_token
 from position_monitor import PositionMonitor, compute_exit_pnl
 
@@ -52,6 +52,7 @@ class TradeCreate(BaseModel):
     entry_date: Optional[str] = None
     notes: str = ""
     is_paper: bool = False
+    entry_snapshot: Optional[str] = None
 
 
 class TradeUpdate(BaseModel):
@@ -63,6 +64,7 @@ class TradeUpdate(BaseModel):
     notes: Optional[str] = None
     stop_loss: Optional[float] = None
     target: Optional[float] = None
+    exit_trigger: Optional[str] = None
 
 app.add_middleware(
     CORSMiddleware,
@@ -576,6 +578,11 @@ def api_trades_summary(is_paper: Optional[bool] = Query(None)):
     return get_summary(is_paper=is_paper)
 
 
+@app.get("/api/trades/analytics")
+def api_trade_analytics(is_paper: Optional[bool] = Query(None)):
+    return get_learning_analytics(is_paper=is_paper)
+
+
 @app.get("/api/trades/realized-pnl")
 def api_realized_pnl(is_paper: Optional[bool] = Query(None)):
     return get_realized_pnl(is_paper=is_paper)
@@ -683,6 +690,7 @@ class BuyTradeRequest(BaseModel):
     fees_exit_sl: float = 0
     trade_type: str = "DELIVERY"
     is_paper: bool = False
+    entry_snapshot: Optional[str] = None
 
 
 @app.post("/api/trades/buy")
@@ -700,6 +708,8 @@ def buy_and_monitor(body: BuyTradeRequest):
         "fees_exit_target": body.fees_exit_target,
         "fees_exit_sl": body.fees_exit_sl,
     }
+    if body.entry_snapshot:
+        trade_data["entry_snapshot"] = body.entry_snapshot
 
     # --- Paper trade path: skip broker entirely ---
     if body.is_paper:
@@ -850,6 +860,7 @@ def close_trade_position(trade_id: int):
         "actual_pnl": net_pnl,
         "actual_fees": total_fees,
         "exit_date": now,
+        "exit_trigger": "MANUAL",
     })
     return updated
 

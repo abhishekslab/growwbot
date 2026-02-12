@@ -194,7 +194,7 @@ export default function SymbolPage() {
               <CandlestickChart candles={candles} liveLtp={liveLtp} />
             </div>
             <div>
-              <TradePanel symbol={symbol} ltp={currentLtp} candles={candles} />
+              <TradePanel symbol={symbol} ltp={currentLtp} candles={candles} quote={quote} />
             </div>
           </div>
         </>
