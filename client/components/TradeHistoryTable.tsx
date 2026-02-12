@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import TradeLearningCard from "@/components/TradeLearningCard";
 
 interface Trade {
   id: number;
@@ -20,6 +21,8 @@ interface Trade {
   exit_date: string | null;
   notes: string;
   is_paper?: number;
+  entry_snapshot?: string;
+  exit_trigger?: string;
 }
 
 type SortKey = "symbol" | "entry_date" | "actual_pnl";
@@ -46,6 +49,7 @@ export default function TradeHistoryTable({ trades }: Props) {
   const [sortAsc, setSortAsc] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const filtered = trades.filter((t) => {
     if (statusFilter !== "ALL" && t.status !== statusFilter) return false;
@@ -145,9 +149,11 @@ export default function TradeHistoryTable({ trades }: Props) {
             </thead>
             <tbody>
               {sorted.map((t) => (
+                <>
                 <tr
                   key={t.id}
-                  className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
+                  onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
+                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
                 >
                   <td className="px-3 py-2">
                     <span className="font-medium text-gray-900 dark:text-gray-100">{t.symbol}</span>
@@ -186,15 +192,38 @@ export default function TradeHistoryTable({ trades }: Props) {
                     {t.actual_fees !== null ? fmt(t.actual_fees) : "—"}
                   </td>
                   <td className="px-3 py-2 text-center">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        statusBadge[t.status] || statusBadge.CLOSED
-                      }`}
-                    >
-                      {t.status}
-                    </span>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          statusBadge[t.status] || statusBadge.CLOSED
+                        }`}
+                      >
+                        {t.status}
+                      </span>
+                      {t.exit_trigger && (
+                        <span
+                          className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                            t.exit_trigger === "TARGET"
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
+                              : t.exit_trigger === "SL"
+                                ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
+                                : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                          }`}
+                        >
+                          {t.exit_trigger}
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
+                {expandedId === t.id && (
+                  <tr key={`${t.id}-expanded`} className="border-b border-gray-100 dark:border-gray-800">
+                    <td colSpan={7} className="bg-gray-50 dark:bg-gray-800/50">
+                      <TradeLearningCard trade={t} />
+                    </td>
+                  </tr>
+                )}
+                </>
               ))}
             </tbody>
           </table>

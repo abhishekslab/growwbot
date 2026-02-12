@@ -11,7 +11,10 @@ import {
   analyzeCandles,
   findMinProfitableQty,
   applyCapitalFilter,
+  computeTradeWarnings,
+  buildEntrySnapshot,
   AnalysisResult,
+  TradeWarning,
 } from "@/lib/candleAnalysis";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -26,13 +29,24 @@ interface ActiveTrade {
   status: string;
 }
 
+interface Quote {
+  ltp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  prev_close: number;
+  change_pct?: number;
+}
+
 interface Props {
   symbol: string;
   ltp: number;
   candles: Candle[];
+  quote?: Quote | null;
 }
 
-export default function TradePanel({ symbol, ltp, candles }: Props) {
+export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
   const { capital, riskPercent, feeConfig, rrRatio, tradeType, setTradeType, smallCapitalMode, autoCompound, maxPositions, paperMode } = useTradeSettings();
   const { effectiveCapital, realizedPnl } = useCompoundedCapital(capital, autoCompound, paperMode);
 
@@ -142,6 +156,32 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
     );
   }, [analysis, entryPrice, slPrice, effectiveCapital, tradeType, feeConfig, riskPercent, rrRatio, smallCapitalMode]);
 
+  const effectiveVerdict = capitalFilter?.verdict ?? analysis?.verdict ?? "WAIT";
+
+  // Trade guardrail warnings
+  const tradeWarnings: TradeWarning[] = useMemo(() => {
+    if (!analysis || entryPrice <= 0) return [];
+    const warnings = computeTradeWarnings(
+      entryPrice,
+      feeAdjusted.target,
+      slPrice,
+      quote?.high || 0,
+      quote?.change_pct || 0,
+      analysis.atr,
+      false
+    );
+    // Add weak signal override warning
+    if (analysis.verdict !== "BUY" && effectiveVerdict !== "AVOID") {
+      warnings.push({
+        id: "WEAK_SIGNAL_OVERRIDE",
+        severity: "WARNING",
+        title: "Weak signal",
+        detail: `Analysis says ${analysis.verdict} (score ${analysis.score}), not BUY. Buying against the signal.`,
+      });
+    }
+    return warnings;
+  }, [analysis, entryPrice, feeAdjusted.target, slPrice, quote, effectiveVerdict]);
+
   // Auto-dismiss toast
   useEffect(() => {
     if (!toast) return;
@@ -155,6 +195,21 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
     if (position.quantity <= 0) return;
     setBuying(true);
     try {
+      // Build entry snapshot for learning system
+      let entrySnapshotStr: string | undefined;
+      if (analysis) {
+        const snapshot = buildEntrySnapshot(
+          analysis,
+          entryPrice,
+          feeAdjusted.target,
+          slPrice,
+          quote?.change_pct || 0,
+          quote?.high || 0,
+          tradeWarnings
+        );
+        entrySnapshotStr = JSON.stringify(snapshot);
+      }
+
       const res = await fetch(`${API_URL}/api/trades/buy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -171,6 +226,7 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
           fees_exit_sl: position.feesExitSL.total,
           trade_type: tradeType,
           is_paper: paperMode,
+          entry_snapshot: entrySnapshotStr,
         }),
       });
       const data = await res.json();
@@ -306,8 +362,6 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
     BEARISH: { char: "-", color: "text-red-600 dark:text-red-400" },
     NEUTRAL: { char: "~", color: "text-gray-500 dark:text-gray-400" },
   };
-
-  const effectiveVerdict = capitalFilter?.verdict ?? analysis?.verdict ?? "WAIT";
 
   // Buy form view
   return (
@@ -487,6 +541,26 @@ export default function TradePanel({ symbol, ltp, candles }: Props) {
       {capitalFilter?.feeWarning && capitalFilter.feeWarningReason && (
         <div className="mb-3 rounded-lg border border-orange-300 bg-orange-50 p-3 text-xs text-orange-800 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-200">
           <span className="font-semibold">Fee Warning:</span> {capitalFilter.feeWarningReason}
+        </div>
+      )}
+
+      {/* Trade Guardrail Warnings */}
+      {tradeWarnings.length > 0 && (
+        <div className="mb-3 space-y-1.5">
+          {tradeWarnings.map((w) => (
+            <div
+              key={w.id}
+              className={`rounded-lg border px-3 py-2 text-xs ${
+                w.severity === "DANGER"
+                  ? "border-red-300 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200"
+                  : w.severity === "WARNING"
+                    ? "border-orange-300 bg-orange-50 text-orange-800 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-200"
+                    : "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200"
+              }`}
+            >
+              <span className="font-semibold">{w.title}:</span> {w.detail}
+            </div>
+          ))}
         </div>
       )}
 
