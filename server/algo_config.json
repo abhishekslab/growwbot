@@ -1,0 +1,26 @@
+{
+  "capital": 100000,
+  "risk_percent": 1,
+  "max_positions_per_algo": 3,
+  "max_total_positions": 6,
+  "trading_start_ist": "09:30",
+  "trading_end_ist": "15:00",
+  "force_close_ist": "15:15",
+  "momentum_scalp": {
+    "ema_fast": 9,
+    "ema_slow": 21,
+    "rsi_min": 40,
+    "rsi_max": 65,
+    "volume_threshold": 1.5,
+    "atr_target_mult": 1.5,
+    "atr_sl_mult": 1.0,
+    "fee_safety_margin": 0.5
+  },
+  "mean_reversion": {
+    "vwap_distance_atr_min": 1.0,
+    "rsi_max": 35,
+    "volume_threshold": 2.0,
+    "atr_sl_mult": 1.5,
+    "fee_safety_margin": 0.5
+  }
+}

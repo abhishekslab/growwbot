@@ -13,9 +13,12 @@ from pydantic import BaseModel
 
 from cache import MarketCache
 from snapshot import save_snapshot, load_snapshot
-from trades_db import init_db, create_trade, get_trade, list_trades, update_trade, delete_trade, get_summary, get_realized_pnl, get_learning_analytics
+from trades_db import init_db, create_trade, get_trade, list_trades, update_trade, delete_trade, get_summary, get_realized_pnl, get_learning_analytics, list_algo_signals, get_algo_performance
 from symbol import fetch_candles, fetch_quote, resolve_exchange_token
 from position_monitor import PositionMonitor, compute_exit_pnl
+from algo_engine import AlgoEngine
+from algo_momentum import MomentumScalping
+from algo_mean_reversion import MeanReversion
 
 logger = logging.getLogger(__name__)
 
@@ -24,16 +27,21 @@ load_dotenv()
 app = FastAPI(title="Groww Portfolio API")
 market_cache = MarketCache()
 monitor = PositionMonitor()
+algo_engine = AlgoEngine()
+algo_engine.register_algo(MomentumScalping(algo_engine._config))
+algo_engine.register_algo(MeanReversion(algo_engine._config))
 
 
 @app.on_event("startup")
 def startup():
     init_db()
     monitor.start()
+    algo_engine.start()
 
 
 @app.on_event("shutdown")
 def shutdown():
+    algo_engine.stop()
     monitor.stop()
 
 
@@ -863,6 +871,76 @@ def close_trade_position(trade_id: int):
         "exit_trigger": "MANUAL",
     })
     return updated
+
+
+# ------------------------------------------------------------------
+# Algo engine endpoints
+# ------------------------------------------------------------------
+
+@app.get("/api/algos")
+def api_list_algos():
+    """List all algos with status + summary."""
+    status = algo_engine.get_status()
+    # Enrich each algo with trade counts
+    for algo in status["algos"]:
+        algo_id = algo["algo_id"]
+        open_trades = list_trades(status="OPEN", is_paper=True, algo_id=algo_id)
+        algo["open_trades"] = len(open_trades)
+    return status
+
+
+@app.post("/api/algos/{algo_id}/start")
+def api_start_algo(algo_id: str):
+    if algo_engine.start_algo(algo_id):
+        return {"message": "Algo %s enabled" % algo_id, "algo_id": algo_id, "enabled": True}
+    raise HTTPException(status_code=404, detail="Algo not found: %s" % algo_id)
+
+
+@app.post("/api/algos/{algo_id}/stop")
+def api_stop_algo(algo_id: str):
+    if algo_engine.stop_algo(algo_id):
+        return {"message": "Algo %s disabled" % algo_id, "algo_id": algo_id, "enabled": False}
+    raise HTTPException(status_code=404, detail="Algo not found: %s" % algo_id)
+
+
+class AlgoSettingsUpdate(BaseModel):
+    enabled: Optional[bool] = None
+    capital: Optional[float] = None
+    risk_percent: Optional[float] = None
+    compounding: Optional[bool] = None
+
+
+@app.patch("/api/algos/{algo_id}/settings")
+def api_update_algo_settings(algo_id: str, body: AlgoSettingsUpdate):
+    data = {}
+    if body.enabled is not None:
+        data["enabled"] = body.enabled
+    if body.capital is not None:
+        if body.capital <= 0:
+            raise HTTPException(status_code=400, detail="Capital must be positive")
+        data["capital"] = body.capital
+    if body.risk_percent is not None:
+        if body.risk_percent <= 0 or body.risk_percent > 100:
+            raise HTTPException(status_code=400, detail="Risk percent must be between 0 and 100")
+        data["risk_percent"] = body.risk_percent
+    if body.compounding is not None:
+        data["compounding"] = 1 if body.compounding else 0
+    if not data:
+        raise HTTPException(status_code=400, detail="No settings to update")
+    result = algo_engine.update_algo_settings(algo_id, data)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Algo not found: %s" % algo_id)
+    return result
+
+
+@app.get("/api/algos/performance")
+def api_algo_performance(is_paper: Optional[bool] = Query(None)):
+    return get_algo_performance(is_paper=is_paper)
+
+
+@app.get("/api/algos/{algo_id}/signals")
+def api_algo_signals(algo_id: str, limit: int = Query(50)):
+    return list_algo_signals(algo_id=algo_id, limit=limit)
 
 
 # ------------------------------------------------------------------

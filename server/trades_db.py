@@ -82,6 +82,42 @@ def init_db():
     except sqlite3.OperationalError:
         pass  # column already exists
 
+    # Migration: add algo_id column (which algo created this trade)
+    try:
+        conn.execute("ALTER TABLE trades ADD COLUMN algo_id TEXT")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_trades_algo_id ON trades(algo_id)")
+
+    # Algo signals table — logs every decision (ENTRY/SKIP/ERROR) for analysis
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS algo_signals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            algo_id TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            signal_type TEXT NOT NULL,
+            reason TEXT,
+            trade_id INTEGER,
+            metadata TEXT,
+            created_at TEXT NOT NULL
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_algo_signals_algo_id ON algo_signals(algo_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_algo_signals_created ON algo_signals(created_at)")
+
+    # Algo settings table — persists enabled/capital/compounding per algo
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS algo_settings (
+            algo_id TEXT PRIMARY KEY,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            capital REAL NOT NULL DEFAULT 100000,
+            risk_percent REAL NOT NULL DEFAULT 1,
+            compounding INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -99,8 +135,8 @@ def create_trade(data: dict) -> dict:
             symbol, trade_type, entry_price, stop_loss, target, quantity,
             capital_used, risk_amount, fees_entry, fees_exit_target, fees_exit_sl,
             status, order_status, groww_order_id, is_paper, entry_date, notes,
-            entry_snapshot, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            entry_snapshot, algo_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             data["symbol"],
@@ -121,6 +157,7 @@ def create_trade(data: dict) -> dict:
             data.get("entry_date", now),
             data.get("notes", ""),
             data.get("entry_snapshot"),
+            data.get("algo_id"),
             now,
             now,
         ),
@@ -139,7 +176,7 @@ def get_trade(trade_id: int) -> Optional[dict]:
     return _row_to_dict(row) if row else None
 
 
-def list_trades(status: Optional[str] = None, symbol: Optional[str] = None, is_paper: Optional[bool] = None) -> List[dict]:
+def list_trades(status: Optional[str] = None, symbol: Optional[str] = None, is_paper: Optional[bool] = None, algo_id: Optional[str] = None) -> List[dict]:
     conn = _get_conn()
     query = "SELECT * FROM trades WHERE 1=1"
     params: list = []
@@ -152,6 +189,9 @@ def list_trades(status: Optional[str] = None, symbol: Optional[str] = None, is_p
     if is_paper is not None:
         query += " AND is_paper = ?"
         params.append(1 if is_paper else 0)
+    if algo_id is not None:
+        query += " AND algo_id = ?"
+        params.append(algo_id)
     query += " ORDER BY created_at DESC"
     rows = conn.execute(query, params).fetchall()
     conn.close()
@@ -328,6 +368,162 @@ def get_learning_analytics(is_paper: Optional[bool] = None) -> dict:
         "by_exit_trigger": by_exit_trigger,
         "overreach_stats": overreach_stats,
     }
+
+
+def save_algo_signal(data):
+    # type: (dict) -> int
+    """Insert a signal log entry into algo_signals. Returns the new row id."""
+    now = datetime.now(timezone.utc).isoformat()
+    conn = _get_conn()
+    cursor = conn.execute(
+        "INSERT INTO algo_signals (algo_id, symbol, signal_type, reason, trade_id, metadata, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (
+            data["algo_id"],
+            data["symbol"],
+            data["signal_type"],
+            data.get("reason", ""),
+            data.get("trade_id"),
+            data.get("metadata"),
+            now,
+        ),
+    )
+    conn.commit()
+    row_id = cursor.lastrowid
+    conn.close()
+    return row_id
+
+
+def list_algo_signals(algo_id=None, limit=50):
+    # type: (Optional[str], int) -> List[dict]
+    """List recent algo signals, optionally filtered by algo_id."""
+    conn = _get_conn()
+    query = "SELECT * FROM algo_signals WHERE 1=1"
+    params = []  # type: list
+    if algo_id:
+        query += " AND algo_id = ?"
+        params.append(algo_id)
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+    rows = conn.execute(query, params).fetchall()
+    conn.close()
+    return [_row_to_dict(r) for r in rows]
+
+
+def get_algo_settings(algo_id):
+    # type: (str) -> Optional[dict]
+    """Get settings for a single algo by ID."""
+    conn = _get_conn()
+    row = conn.execute("SELECT * FROM algo_settings WHERE algo_id = ?", (algo_id,)).fetchone()
+    conn.close()
+    return _row_to_dict(row) if row else None
+
+
+def get_all_algo_settings():
+    # type: () -> List[dict]
+    """Get settings for all algos."""
+    conn = _get_conn()
+    rows = conn.execute("SELECT * FROM algo_settings ORDER BY algo_id").fetchall()
+    conn.close()
+    return [_row_to_dict(r) for r in rows]
+
+
+def upsert_algo_settings(algo_id, data):
+    # type: (str, dict) -> dict
+    """Insert or update algo settings. Returns the row."""
+    now = datetime.now(timezone.utc).isoformat()
+    conn = _get_conn()
+    existing = conn.execute("SELECT * FROM algo_settings WHERE algo_id = ?", (algo_id,)).fetchone()
+
+    if existing:
+        sets = ["updated_at = ?"]
+        params = [now]  # type: list
+        allowed = {"enabled", "capital", "risk_percent", "compounding"}
+        for key, val in data.items():
+            if key in allowed:
+                sets.append("%s = ?" % key)
+                params.append(val)
+        params.append(algo_id)
+        conn.execute("UPDATE algo_settings SET %s WHERE algo_id = ?" % ", ".join(sets), params)
+    else:
+        conn.execute(
+            "INSERT INTO algo_settings (algo_id, enabled, capital, risk_percent, compounding, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                algo_id,
+                data.get("enabled", 1),
+                data.get("capital", 100000),
+                data.get("risk_percent", 1),
+                data.get("compounding", 0),
+                now,
+                now,
+            ),
+        )
+
+    conn.commit()
+    row = conn.execute("SELECT * FROM algo_settings WHERE algo_id = ?", (algo_id,)).fetchone()
+    conn.close()
+    return _row_to_dict(row)
+
+
+def get_algo_net_pnl(algo_id, is_paper=True):
+    # type: (str, bool) -> float
+    """Sum of actual_pnl for closed trades by algo_id (for compounding calculation)."""
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT COALESCE(SUM(actual_pnl), 0) FROM trades "
+        "WHERE algo_id = ? AND status IN ('WON', 'LOST', 'CLOSED') AND is_paper = ?",
+        (algo_id, 1 if is_paper else 0),
+    ).fetchone()
+    conn.close()
+    return round(float(row[0]), 2)
+
+
+def get_algo_performance(is_paper=None):
+    # type: (Optional[bool]) -> List[dict]
+    """Per-algo performance aggregation. Returns list of dicts with stats per algo_id."""
+    conn = _get_conn()
+    paper_clause = ""
+    params = []  # type: list
+    if is_paper is not None:
+        paper_clause = " AND is_paper = ?"
+        params = [1 if is_paper else 0]
+
+    closed = "status IN ('WON', 'LOST', 'CLOSED')"
+
+    rows = conn.execute(
+        "SELECT algo_id, "
+        "COUNT(*) as total, "
+        "SUM(CASE WHEN status = 'WON' THEN 1 ELSE 0 END) as won, "
+        "SUM(CASE WHEN status = 'LOST' THEN 1 ELSE 0 END) as lost, "
+        "ROUND(COALESCE(SUM(actual_pnl), 0), 2) as net_pnl, "
+        "ROUND(AVG(CASE WHEN actual_pnl > 0 THEN actual_pnl END), 2) as avg_profit, "
+        "ROUND(AVG(CASE WHEN actual_pnl < 0 THEN actual_pnl END), 2) as avg_loss, "
+        "ROUND(COALESCE(SUM(actual_fees), 0), 2) as total_fees, "
+        "ROUND(MIN(actual_pnl), 2) as worst_trade "
+        "FROM trades WHERE " + closed + " AND algo_id IS NOT NULL" + paper_clause +
+        " GROUP BY algo_id ORDER BY net_pnl DESC",
+        params,
+    ).fetchall()
+    conn.close()
+
+    result = []
+    for r in rows:
+        total = r[1] or 0
+        won = r[2] or 0
+        result.append({
+            "algo_id": r[0],
+            "total_trades": total,
+            "won": won,
+            "lost": r[3] or 0,
+            "win_rate": round(won / total * 100, 1) if total > 0 else 0,
+            "net_pnl": r[4] or 0,
+            "avg_profit": r[5] or 0,
+            "avg_loss": r[6] or 0,
+            "total_fees": r[7] or 0,
+            "worst_trade": r[8] or 0,
+        })
+    return result
 
 
 def get_summary(is_paper: Optional[bool] = None) -> dict:
