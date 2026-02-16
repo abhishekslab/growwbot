@@ -27,6 +27,7 @@ class MomentumScalping(BaseAlgorithm):
     ALGO_ID = "momentum_scalp"
     ALGO_NAME = "Momentum Scalping"
     DESCRIPTION = "EMA crossover + RSI + volume confirmation on 1m candles"
+    ALGO_VERSION = "1.0"
 
     def __init__(self, config):
         # type: (dict) -> None

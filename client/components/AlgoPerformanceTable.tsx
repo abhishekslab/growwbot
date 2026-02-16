@@ -2,6 +2,7 @@
 
 interface AlgoPerf {
   algo_id: string;
+  algo_version?: string;
   total_trades: number;
   won: number;
   lost: number;
@@ -40,6 +41,7 @@ export default function AlgoPerformanceTable({
           <tr>
             {[
               "Algorithm",
+              "Version",
               "Trades",
               "Won",
               "Lost",
@@ -64,6 +66,9 @@ export default function AlgoPerformanceTable({
             <tr key={row.algo_id}>
               <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                 {algoNames[row.algo_id] || row.algo_id}
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                {row.algo_version ? `v${row.algo_version}` : "-"}
               </td>
               <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                 {row.total_trades}

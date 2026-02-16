@@ -24,9 +24,10 @@ const ALGO_COLORS: Record<string, string> = {
 
 const SIGNAL_COLORS: Record<string, string> = {
   ENTRY: "text-green-600 dark:text-green-400",
-  SKIP: "text-gray-500 dark:text-gray-400",
+  SKIP: "text-yellow-600 dark:text-yellow-400",
   ERROR: "text-red-600 dark:text-red-400",
   FORCE_CLOSE: "text-orange-600 dark:text-orange-400",
+  TIME_EXIT: "text-orange-600 dark:text-orange-400",
 };
 
 function formatTime(signal: Signal): string {

@@ -75,6 +75,15 @@ class AlgoEngine:
         self._signal_buffer = deque(maxlen=200)  # in-memory ring buffer
         self._last_cycle_time = 0.0
         self._cycle_count = 0
+        self._candle_cache = {}  # type: Dict[str, tuple]  # symbol -> (candles, expire_monotonic)
+        self._candle_cache_ttl = 120  # 2 minutes — 1m candles barely change within a cycle
+        self._candle_fail_counts = {}  # type: Dict[str, int]  # symbol -> consecutive failure count
+        self._cycle_fetch_count = 0  # fresh API calls this cycle
+        self._max_fetches_per_cycle = 8  # cap fresh API calls to stay under rate limits
+        # Live cycle stats for UI visibility
+        self._last_cycle_at = ""  # type: str  # ISO timestamp
+        self._last_cycle_stats = {}  # type: Dict[str, Any]  # detailed stats from last cycle
+        self._market_status = "pre_market"  # type: str  # pre_market, trading, post_market, closed
 
     def register_algo(self, algo):
         # type: (BaseAlgorithm) -> None
@@ -175,6 +184,7 @@ class AlgoEngine:
                 "algo_id": algo.ALGO_ID,
                 "name": algo.ALGO_NAME,
                 "description": algo.DESCRIPTION,
+                "version": algo.ALGO_VERSION,
                 "enabled": self._algo_enabled.get(algo_id, False),
                 "capital": base_capital,
                 "risk_percent": settings.get("risk_percent", self._config.get("risk_percent", 1)),
@@ -188,6 +198,9 @@ class AlgoEngine:
             "cycle_interval": self._cycle_interval,
             "cycle_count": self._cycle_count,
             "last_cycle_time": self._last_cycle_time,
+            "last_cycle_at": self._last_cycle_at,
+            "market_status": self._market_status,
+            "last_cycle_stats": self._last_cycle_stats,
             "algos": algos,
         }
 
@@ -212,6 +225,7 @@ class AlgoEngine:
 
                 # Market hours: 9:20 - 15:30 IST
                 if current_minutes < 9 * 60 + 20 or current_minutes > 15 * 60 + 30:
+                    self._market_status = "closed"
                     time.sleep(self._cycle_interval)
                     continue
 
@@ -220,6 +234,7 @@ class AlgoEngine:
                     self._config.get("force_close_ist", "15:15")
                 )
                 if current_minutes >= fc_h * 60 + fc_m:
+                    self._market_status = "force_closing"
                     self._force_close_all()
                     time.sleep(self._cycle_interval)
                     continue
@@ -236,10 +251,13 @@ class AlgoEngine:
                 )
 
                 if not in_trading_window:
+                    self._market_status = "waiting"
                     time.sleep(self._cycle_interval)
                     continue
 
+                self._market_status = "scanning"
                 self._run_cycle()
+                self._market_status = "trading"
 
             except Exception:
                 logger.exception("AlgoEngine loop error")
@@ -250,10 +268,24 @@ class AlgoEngine:
         """Execute one evaluation cycle across all enabled algos."""
         self._cycle_count += 1
         cycle_start = time.time()
+        self._prune_candle_cache()
+        self._cycle_fetch_count = 0
+        _cycle_stats = {
+            "candidates": 0,
+            "evaluated": 0,
+            "candle_hits": 0,
+            "candle_api": 0,
+            "candle_fails": 0,
+            "signals": 0,
+            "entries": 0,
+            "stale_closed": 0,
+        }
 
         # Load universe from Daily Picks snapshot
         snapshot = load_snapshot()
         if not snapshot or not snapshot.get("candidates"):
+            self._last_cycle_at = datetime.now(timezone.utc).isoformat()
+            self._last_cycle_stats = _cycle_stats
             return
 
         candidates = snapshot["candidates"]
@@ -264,6 +296,7 @@ class AlgoEngine:
         ]
         if not filtered:
             filtered = candidates[:20]  # fallback: top 20
+        _cycle_stats["candidates"] = len(filtered)
 
         # Batch fetch LTP (include open position symbols too)
         open_positions = list_trades(status="OPEN", is_paper=True)
@@ -310,6 +343,7 @@ class AlgoEngine:
                     trade_id=trade["id"],
                 )
                 stale_closed = True
+                _cycle_stats["stale_closed"] += 1
 
         # Re-fetch open positions if any were closed
         if stale_closed:
@@ -355,14 +389,16 @@ class AlgoEngine:
                     # Fetch 1m candles
                     candles = self._fetch_candles(symbol)
                     if not candles or len(candles) < 30:
-                        self._log_signal(algo_id, symbol, "SKIP", "Insufficient candle data")
                         continue
 
+                    _cycle_stats["evaluated"] += 1
                     signal = algo.evaluate(symbol, candles, ltp, candidate)
 
                     if signal and signal.action == "BUY":
+                        _cycle_stats["signals"] += 1
                         trade = self._execute_signal(signal)
                         if trade:
+                            _cycle_stats["entries"] += 1
                             total_open += 1
                             open_positions.append(trade)
                             self._log_signal(
@@ -371,17 +407,26 @@ class AlgoEngine:
                             )
                         else:
                             self._log_signal(algo_id, symbol, "SKIP", "Trade creation failed")
-                    else:
-                        self._log_signal(algo_id, symbol, "SKIP", "No signal")
 
                 except Exception as e:
                     logger.warning("AlgoEngine: error evaluating %s/%s: %s", algo_id, symbol, e)
                     self._log_signal(algo_id, symbol, "ERROR", str(e))
 
         self._last_cycle_time = time.time() - cycle_start
+        self._last_cycle_at = datetime.now(timezone.utc).isoformat()
+
+        # Candle cache stats
+        _cycle_stats["candle_api"] = self._cycle_fetch_count
+        _cycle_stats["candle_hits"] = _cycle_stats["evaluated"] - self._cycle_fetch_count
+        if _cycle_stats["candle_hits"] < 0:
+            _cycle_stats["candle_hits"] = 0
+        _cycle_stats["candle_fails"] = len(self._candle_fail_counts)
+        self._last_cycle_stats = _cycle_stats
+
         logger.debug(
-            "AlgoEngine cycle #%d completed in %.1fs, %d candidates evaluated",
-            self._cycle_count, self._last_cycle_time, len(filtered),
+            "AlgoEngine cycle #%d completed in %.1fs, %d candidates, %d evaluated, %d entries",
+            self._cycle_count, self._last_cycle_time,
+            _cycle_stats["candidates"], _cycle_stats["evaluated"], _cycle_stats["entries"],
         )
 
     def _execute_signal(self, signal):
@@ -410,6 +455,10 @@ class AlgoEngine:
                 )
                 return None
 
+            # Resolve algo version
+            algo_obj = self._algos.get(signal.algo_id)
+            algo_version = algo_obj.ALGO_VERSION if algo_obj else None
+
             trade_data = {
                 "symbol": signal.symbol,
                 "trade_type": "INTRADAY",
@@ -425,9 +474,11 @@ class AlgoEngine:
                 "is_paper": 1,
                 "order_status": "SIMULATED",
                 "algo_id": signal.algo_id,
+                "algo_version": algo_version,
                 "notes": "Algo: %s | %s" % (signal.algo_id, signal.reason),
                 "entry_snapshot": json.dumps({
                     "algo_id": signal.algo_id,
+                    "algo_version": algo_version,
                     "confidence": signal.confidence,
                     "reason": signal.reason,
                     "fee_breakeven": signal.fee_breakeven,
@@ -484,15 +535,22 @@ class AlgoEngine:
                 trade_id=trade["id"],
             )
 
-    def _log_signal(self, algo_id, symbol, signal_type, reason, trade_id=None):
-        # type: (str, str, str, str, Optional[int]) -> None
+    def _log_signal(self, algo_id, symbol, signal_type, reason, trade_id=None, algo_version=None):
+        # type: (str, str, str, str, Optional[int], Optional[str]) -> None
         """Log signal to both DB and in-memory ring buffer."""
+        # Auto-resolve version from registered algo if not provided
+        if algo_version is None:
+            algo_obj = self._algos.get(algo_id)
+            if algo_obj:
+                algo_version = algo_obj.ALGO_VERSION
+
         entry = {
             "algo_id": algo_id,
             "symbol": symbol,
             "signal_type": signal_type,
             "reason": reason,
             "trade_id": trade_id,
+            "algo_version": algo_version,
             "timestamp": time.time(),
         }
         self._signal_buffer.appendleft(entry)
@@ -504,6 +562,7 @@ class AlgoEngine:
                 "signal_type": signal_type,
                 "reason": reason,
                 "trade_id": trade_id,
+                "algo_version": algo_version,
             })
         except Exception:
             logger.debug("Failed to persist algo signal to DB")
@@ -540,12 +599,49 @@ class AlgoEngine:
 
     def _fetch_candles(self, symbol):
         # type: (str) -> List[dict]
-        """Fetch 1-minute candles for a symbol."""
+        """Fetch 1-minute candles with in-memory cache + throttle + per-cycle cap."""
+        now = time.monotonic()
+
+        # Return cached if still fresh
+        cached = self._candle_cache.get(symbol)
+        if cached and cached[1] > now:
+            return cached[0]
+
+        # Per-cycle cap: don't exceed max fresh API calls to avoid rate limits
+        if self._cycle_fetch_count >= self._max_fetches_per_cycle:
+            return []
+
         try:
             from main import get_groww_client
             from symbol import fetch_candles
             groww = get_groww_client()
-            return fetch_candles(groww, symbol, interval="1minute", days=1)
+            candles = fetch_candles(groww, symbol, interval="1minute", days=1)
+            self._cycle_fetch_count += 1
+
+            # Cache result
+            self._candle_cache[symbol] = (candles, now + self._candle_cache_ttl)
+
+            # Clear failure tracking on success
+            self._candle_fail_counts.pop(symbol, None)
+
+            # Throttle between uncached API calls
+            time.sleep(0.4)
+            return candles
         except Exception as e:
+            self._cycle_fetch_count += 1
             logger.warning("AlgoEngine: failed to fetch candles for %s: %s", symbol, e)
+
+            # Exponential backoff on failure cache: 2min, 4min, 8min (cap at 10min)
+            fails = self._candle_fail_counts.get(symbol, 0) + 1
+            self._candle_fail_counts[symbol] = fails
+            backoff = min(120 * (2 ** (fails - 1)), 600)  # 120s, 240s, 480s, cap 600s
+            self._candle_cache[symbol] = ([], now + backoff)
             return []
+
+    def _prune_candle_cache(self):
+        # type: () -> None
+        """Remove expired entries from candle cache."""
+        now = time.monotonic()
+        expired = [k for k, v in self._candle_cache.items() if v[1] <= now]
+        for k in expired:
+            del self._candle_cache[k]

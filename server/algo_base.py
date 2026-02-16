@@ -66,6 +66,7 @@ class BaseAlgorithm:
     ALGO_ID = ""       # type: str
     ALGO_NAME = ""     # type: str
     DESCRIPTION = ""   # type: str
+    ALGO_VERSION = "1.0"  # type: str
     _effective_capital = None  # type: Optional[float]
     _risk_percent = None       # type: Optional[float]
 

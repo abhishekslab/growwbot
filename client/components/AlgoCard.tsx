@@ -7,6 +7,7 @@ interface AlgoInfo {
   algo_id: string;
   name: string;
   description: string;
+  version?: string;
   enabled: boolean;
   open_trades?: number;
   capital: number;
@@ -147,6 +148,11 @@ export default function AlgoCard({
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {algo.name}
+              {algo.version && (
+                <span className="ml-2 inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  v{algo.version}
+                </span>
+              )}
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {algo.description}

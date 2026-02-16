@@ -24,6 +24,7 @@ class MeanReversion(BaseAlgorithm):
     ALGO_ID = "mean_reversion"
     ALGO_NAME = "Mean Reversion"
     DESCRIPTION = "Buy oversold stocks below VWAP with volume spike, target VWAP"
+    ALGO_VERSION = "1.0"
 
     def __init__(self, config):
         # type: (dict) -> None

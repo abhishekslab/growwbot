@@ -934,8 +934,8 @@ def api_update_algo_settings(algo_id: str, body: AlgoSettingsUpdate):
 
 
 @app.get("/api/algos/performance")
-def api_algo_performance(is_paper: Optional[bool] = Query(None)):
-    return get_algo_performance(is_paper=is_paper)
+def api_algo_performance(is_paper: Optional[bool] = Query(None), by_version: bool = Query(False)):
+    return get_algo_performance(is_paper=is_paper, group_by_version=by_version)
 
 
 @app.get("/api/algos/{algo_id}/signals")

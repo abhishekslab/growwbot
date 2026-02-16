@@ -89,6 +89,12 @@ def init_db():
         pass  # column already exists
     conn.execute("CREATE INDEX IF NOT EXISTS idx_trades_algo_id ON trades(algo_id)")
 
+    # Migration: add algo_version column (which version of the algo created this trade)
+    try:
+        conn.execute("ALTER TABLE trades ADD COLUMN algo_version TEXT")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+
     # Algo signals table — logs every decision (ENTRY/SKIP/ERROR) for analysis
     conn.execute("""
         CREATE TABLE IF NOT EXISTS algo_signals (
@@ -102,6 +108,12 @@ def init_db():
             created_at TEXT NOT NULL
         )
     """)
+
+    # Migration: add algo_version column to algo_signals
+    try:
+        conn.execute("ALTER TABLE algo_signals ADD COLUMN algo_version TEXT")
+    except sqlite3.OperationalError:
+        pass  # column already exists
     conn.execute("CREATE INDEX IF NOT EXISTS idx_algo_signals_algo_id ON algo_signals(algo_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_algo_signals_created ON algo_signals(created_at)")
 
@@ -135,8 +147,8 @@ def create_trade(data: dict) -> dict:
             symbol, trade_type, entry_price, stop_loss, target, quantity,
             capital_used, risk_amount, fees_entry, fees_exit_target, fees_exit_sl,
             status, order_status, groww_order_id, is_paper, entry_date, notes,
-            entry_snapshot, algo_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            entry_snapshot, algo_id, algo_version, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             data["symbol"],
@@ -158,6 +170,7 @@ def create_trade(data: dict) -> dict:
             data.get("notes", ""),
             data.get("entry_snapshot"),
             data.get("algo_id"),
+            data.get("algo_version"),
             now,
             now,
         ),
@@ -376,8 +389,8 @@ def save_algo_signal(data):
     now = datetime.now(timezone.utc).isoformat()
     conn = _get_conn()
     cursor = conn.execute(
-        "INSERT INTO algo_signals (algo_id, symbol, signal_type, reason, trade_id, metadata, created_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO algo_signals (algo_id, symbol, signal_type, reason, trade_id, metadata, algo_version, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (
             data["algo_id"],
             data["symbol"],
@@ -385,6 +398,7 @@ def save_algo_signal(data):
             data.get("reason", ""),
             data.get("trade_id"),
             data.get("metadata"),
+            data.get("algo_version"),
             now,
         ),
     )
@@ -394,8 +408,8 @@ def save_algo_signal(data):
     return row_id
 
 
-def list_algo_signals(algo_id=None, limit=50):
-    # type: (Optional[str], int) -> List[dict]
+def list_algo_signals(algo_id=None, limit=50, exclude_skips=True):
+    # type: (Optional[str], int, bool) -> List[dict]
     """List recent algo signals, optionally filtered by algo_id."""
     conn = _get_conn()
     query = "SELECT * FROM algo_signals WHERE 1=1"
@@ -403,6 +417,8 @@ def list_algo_signals(algo_id=None, limit=50):
     if algo_id:
         query += " AND algo_id = ?"
         params.append(algo_id)
+    if exclude_skips:
+        query += " AND NOT (signal_type = 'SKIP' AND reason IN ('No signal', 'Insufficient candle data'))"
     query += " ORDER BY created_at DESC LIMIT ?"
     params.append(limit)
     rows = conn.execute(query, params).fetchall()
@@ -492,9 +508,10 @@ def get_algo_net_pnl(algo_id, is_paper=True):
     return round(float(row[0]), 2)
 
 
-def get_algo_performance(is_paper=None):
-    # type: (Optional[bool]) -> List[dict]
-    """Per-algo performance aggregation. Returns list of dicts with stats per algo_id."""
+def get_algo_performance(is_paper=None, group_by_version=False):
+    # type: (Optional[bool], bool) -> List[dict]
+    """Per-algo performance aggregation. Returns list of dicts with stats per algo_id.
+    When group_by_version=True, groups by (algo_id, algo_version) and includes version in results."""
     conn = _get_conn()
     paper_clause = ""
     params = []  # type: list
@@ -504,8 +521,15 @@ def get_algo_performance(is_paper=None):
 
     closed = "status IN ('WON', 'LOST', 'CLOSED')"
 
+    if group_by_version:
+        select_cols = "algo_id, algo_version, "
+        group_clause = " GROUP BY algo_id, algo_version"
+    else:
+        select_cols = "algo_id, "
+        group_clause = " GROUP BY algo_id"
+
     rows = conn.execute(
-        "SELECT algo_id, "
+        "SELECT " + select_cols +
         "COUNT(*) as total, "
         "SUM(CASE WHEN status = 'WON' THEN 1 ELSE 0 END) as won, "
         "SUM(CASE WHEN status = 'LOST' THEN 1 ELSE 0 END) as lost, "
@@ -515,27 +539,45 @@ def get_algo_performance(is_paper=None):
         "ROUND(COALESCE(SUM(actual_fees), 0), 2) as total_fees, "
         "ROUND(MIN(actual_pnl), 2) as worst_trade "
         "FROM trades WHERE " + closed + " AND algo_id IS NOT NULL" + paper_clause +
-        " GROUP BY algo_id ORDER BY net_pnl DESC",
+        group_clause + " ORDER BY net_pnl DESC",
         params,
     ).fetchall()
     conn.close()
 
     result = []
     for r in rows:
-        total = r[1] or 0
-        won = r[2] or 0
-        result.append({
-            "algo_id": r[0],
-            "total_trades": total,
-            "won": won,
-            "lost": r[3] or 0,
-            "win_rate": round(won / total * 100, 1) if total > 0 else 0,
-            "net_pnl": r[4] or 0,
-            "avg_profit": r[5] or 0,
-            "avg_loss": r[6] or 0,
-            "total_fees": r[7] or 0,
-            "worst_trade": r[8] or 0,
-        })
+        if group_by_version:
+            total = r[2] or 0
+            won = r[3] or 0
+            entry = {
+                "algo_id": r[0],
+                "algo_version": r[1],
+                "total_trades": total,
+                "won": won,
+                "lost": r[4] or 0,
+                "win_rate": round(won / total * 100, 1) if total > 0 else 0,
+                "net_pnl": r[5] or 0,
+                "avg_profit": r[6] or 0,
+                "avg_loss": r[7] or 0,
+                "total_fees": r[8] or 0,
+                "worst_trade": r[9] or 0,
+            }
+        else:
+            total = r[1] or 0
+            won = r[2] or 0
+            entry = {
+                "algo_id": r[0],
+                "total_trades": total,
+                "won": won,
+                "lost": r[3] or 0,
+                "win_rate": round(won / total * 100, 1) if total > 0 else 0,
+                "net_pnl": r[4] or 0,
+                "avg_profit": r[5] or 0,
+                "avg_loss": r[6] or 0,
+                "total_fees": r[7] or 0,
+                "worst_trade": r[8] or 0,
+            }
+        result.append(entry)
     return result
 
 

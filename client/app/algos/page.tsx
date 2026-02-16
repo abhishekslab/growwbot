@@ -11,6 +11,7 @@ interface AlgoInfo {
   algo_id: string;
   name: string;
   description: string;
+  version?: string;
   enabled: boolean;
   open_trades?: number;
   capital: number;
@@ -20,16 +21,31 @@ interface AlgoInfo {
   compounding_pnl: number;
 }
 
+interface CycleStats {
+  candidates: number;
+  evaluated: number;
+  candle_hits: number;
+  candle_api: number;
+  candle_fails: number;
+  signals: number;
+  entries: number;
+  stale_closed: number;
+}
+
 interface EngineStatus {
   running: boolean;
   cycle_interval: number;
   cycle_count: number;
   last_cycle_time: number;
+  last_cycle_at?: string;
+  market_status?: string;
+  last_cycle_stats?: CycleStats;
   algos: AlgoInfo[];
 }
 
 interface AlgoPerf {
   algo_id: string;
+  algo_version?: string;
   total_trades: number;
   won: number;
   lost: number;
@@ -188,9 +204,40 @@ export default function AlgosPage() {
                 {status.running ? "Running" : "Stopped"}
               </span>
             </p>
+            {status.market_status && (
+              <p>
+                Market:{" "}
+                <span
+                  className={
+                    status.market_status === "scanning"
+                      ? "font-medium text-blue-600 dark:text-blue-400"
+                      : status.market_status === "trading"
+                        ? "font-medium text-green-600 dark:text-green-400"
+                        : "font-medium text-gray-500"
+                  }
+                >
+                  {status.market_status === "scanning"
+                    ? "Scanning..."
+                    : status.market_status === "trading"
+                      ? "Trading"
+                      : status.market_status === "waiting"
+                        ? "Waiting for window"
+                        : status.market_status === "force_closing"
+                          ? "Force closing"
+                          : "Closed"}
+                </span>
+              </p>
+            )}
             <p>Cycles: {status.cycle_count}</p>
-            {status.last_cycle_time > 0 && (
-              <p>Last cycle: {status.last_cycle_time.toFixed(1)}s</p>
+            {status.last_cycle_at && (
+              <p>
+                Last scan:{" "}
+                {new Date(status.last_cycle_at).toLocaleTimeString("en-IN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+              </p>
             )}
           </div>
         )}
@@ -199,6 +246,61 @@ export default function AlgosPage() {
       {error && (
         <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
           {error}
+        </div>
+      )}
+
+      {/* Live Cycle Stats */}
+      {status?.last_cycle_stats && status.last_cycle_stats.candidates > 0 && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {[
+            {
+              label: "Candidates",
+              value: status.last_cycle_stats.candidates,
+              color: "text-gray-900 dark:text-gray-100",
+            },
+            {
+              label: "Evaluated",
+              value: status.last_cycle_stats.evaluated,
+              color: "text-blue-600 dark:text-blue-400",
+            },
+            {
+              label: "Cache Hits",
+              value: status.last_cycle_stats.candle_hits,
+              color: "text-green-600 dark:text-green-400",
+            },
+            {
+              label: "API Calls",
+              value: status.last_cycle_stats.candle_api,
+              color: "text-orange-600 dark:text-orange-400",
+            },
+            {
+              label: "Signals",
+              value: status.last_cycle_stats.signals,
+              color: "text-purple-600 dark:text-purple-400",
+            },
+            {
+              label: "Entries",
+              value: status.last_cycle_stats.entries,
+              color: "text-green-600 dark:text-green-400",
+            },
+            {
+              label: "Cycle Time",
+              value: status.last_cycle_time.toFixed(1) + "s",
+              color: "text-gray-900 dark:text-gray-100",
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+            >
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {stat.label}
+              </p>
+              <p className={`text-lg font-semibold ${stat.color}`}>
+                {stat.value}
+              </p>
+            </div>
+          ))}
         </div>
       )}
 
