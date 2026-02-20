@@ -109,52 +109,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 _cached_client = None
 _cached_client_time = 0
 _TOKEN_TTL = 8 * 3600  # 8 hours
-_TOKEN_FILE = os.path.join(os.path.dirname(__file__) or ".", ".groww_token")
 _auth_lock = threading.Lock()
-_auth_fail_time = 0  # timestamp of last auth failure
-_AUTH_COOLDOWN = 300  # don't retry auth for 5 minutes after failure
-
-
-def _save_token(access_token):
-    """Persist token to disk so server restarts / --reload reuse it."""
-    try:
-        import tempfile
-        fd, tmp = tempfile.mkstemp(dir=os.path.dirname(_TOKEN_FILE) or ".")
-        with os.fdopen(fd, "w") as f:
-            json.dump({"token": access_token, "time": time.time()}, f)
-        os.replace(tmp, _TOKEN_FILE)
-    except Exception as e:
-        logger.warning("Could not save token to disk: %s", e)
-
-
-def _load_token():
-    """Load persisted token from disk. Returns (token, timestamp) or (None, 0)."""
-    try:
-        with open(_TOKEN_FILE) as f:
-            data = json.load(f)
-        token = data["token"]
-        token_time = float(data["time"])
-        if (time.time() - token_time) < _TOKEN_TTL:
-            return token, token_time
-    except Exception:
-        pass
-    return None, 0
 
 
 def _ensure_token():
-    """Obtain a valid token at startup, retrying on rate limits."""
-    global _cached_client, _cached_client_time, _auth_fail_time
+    """Obtain a valid token at startup. Crashes if auth fails."""
+    global _cached_client, _cached_client_time
 
-    # 1. Try loading persisted token from disk
-    saved_token, saved_time = _load_token()
-    if saved_token:
-        from growwapi import GrowwAPI
-        _cached_client = GrowwAPI(saved_token)
-        _cached_client_time = saved_time
-        logger.info("Startup: loaded persisted token (age %.0fs)", time.time() - saved_time)
-        return
-
-    # 2. Generate fresh token with rate-limit retries
     api_key = os.getenv("API_KEY")
     api_secret = os.getenv("API_SECRET")
     if not api_key or not api_secret:
@@ -170,9 +131,7 @@ def _ensure_token():
             access_token = GrowwAPI.get_access_token(api_key, secret=api_secret)
             _cached_client = GrowwAPI(access_token)
             _cached_client_time = time.time()
-            _auth_fail_time = 0
-            _save_token(access_token)
-            logger.info("Startup: token obtained and persisted")
+            logger.info("Startup: token obtained successfully")
             return
         except Exception as e:
             err_str = str(e).lower()
@@ -182,8 +141,8 @@ def _ensure_token():
                                attempt, max_retries, retry_interval)
                 time.sleep(retry_interval)
             else:
-                logger.warning("Startup: auth failed: %s — deferring to lazy auth", e)
-                return
+                logger.critical("Startup: auth failed: %s — cannot start", e)
+                raise SystemExit(1)
 
 
 def get_groww_client():
@@ -202,23 +161,6 @@ def get_groww_client():
 
         from growwapi import GrowwAPI
 
-        # 1. Try loading persisted token from disk (survives --reload / restart)
-        saved_token, saved_time = _load_token()
-        if saved_token:
-            logger.info("Loaded persisted token from disk (age %.0fs)", now - saved_time)
-            _cached_client = GrowwAPI(saved_token)
-            _cached_client_time = saved_time
-            return _cached_client
-
-        # 2. No persisted token — must authenticate
-        #    But if auth failed recently, don't hammer the endpoint
-        if _auth_fail_time and (now - _auth_fail_time) < _AUTH_COOLDOWN:
-            wait = int(_AUTH_COOLDOWN - (now - _auth_fail_time))
-            raise HTTPException(
-                status_code=503,
-                detail="Auth rate-limited. Retry in %ds, or run: python3 get_token.py" % wait,
-            )
-
         api_key = os.getenv("API_KEY")
         api_secret = os.getenv("API_SECRET")
         if not api_key or not api_secret:
@@ -231,25 +173,13 @@ def get_groww_client():
             access_token = GrowwAPI.get_access_token(api_key, secret=api_secret)
             _cached_client = GrowwAPI(access_token)
             _cached_client_time = time.time()
-            _auth_fail_time = 0  # reset on success
-            _save_token(access_token)
-            logger.info("Groww auth successful, token persisted to disk")
+            logger.info("Token refreshed successfully")
             return _cached_client
         except Exception as e:
             logger.warning("Auth failed: %s", e)
-            _auth_fail_time = time.time()
-
-            # Return stale in-memory client if one exists
-            if _cached_client:
-                logger.warning(
-                    "Returning stale client (age %.0fs)",
-                    time.time() - _cached_client_time,
-                )
-                return _cached_client
-
             raise HTTPException(
                 status_code=503,
-                detail="Authentication failed: %s. Run: python3 get_token.py" % e,
+                detail="Authentication failed: %s" % e,
             )
 
 

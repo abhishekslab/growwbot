@@ -8,4 +8,4 @@ __pycache__/
 *.db-wal
 .ruff_cache/
 daily_picks_snapshot.json
-.groww_token
+
