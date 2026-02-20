@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Groww Portfolio Dashboard",
-  description: "View your Groww portfolio holdings and performance",
+  title: "GrowwBot Dashboard",
+  description: "GrowwBot — portfolio holdings, daily picks, and performance",
 };
 
 export default function RootLayout({

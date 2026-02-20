@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-app = FastAPI(title="Groww Portfolio API")
+app = FastAPI(title="GrowwBot API")
 market_cache = MarketCache()
 monitor = PositionMonitor()
 algo_engine = AlgoEngine()
