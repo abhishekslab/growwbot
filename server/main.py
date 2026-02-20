@@ -35,6 +35,7 @@ algo_engine.register_algo(MeanReversion(algo_engine._config))
 @app.on_event("startup")
 def startup():
     init_db()
+    _ensure_token()
     monitor.start()
     algo_engine.start()
 
@@ -125,6 +126,51 @@ def _load_token():
     except Exception:
         pass
     return None, 0
+
+
+def _ensure_token():
+    """Obtain a valid token at startup, retrying on rate limits."""
+    global _cached_client, _cached_client_time, _auth_fail_time
+
+    # 1. Try loading persisted token from disk
+    saved_token, saved_time = _load_token()
+    if saved_token:
+        from growwapi import GrowwAPI
+        _cached_client = GrowwAPI(saved_token)
+        _cached_client_time = saved_time
+        logger.info("Startup: loaded persisted token (age %.0fs)", time.time() - saved_time)
+        return
+
+    # 2. Generate fresh token with rate-limit retries
+    api_key = os.getenv("API_KEY")
+    api_secret = os.getenv("API_SECRET")
+    if not api_key or not api_secret:
+        logger.critical("Startup: API_KEY/API_SECRET not set in server/.env — cannot start")
+        raise SystemExit(1)
+
+    from growwapi import GrowwAPI
+    max_retries = 5
+    retry_interval = 60
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            access_token = GrowwAPI.get_access_token(api_key, secret=api_secret)
+            _cached_client = GrowwAPI(access_token)
+            _cached_client_time = time.time()
+            _auth_fail_time = 0
+            _save_token(access_token)
+            logger.info("Startup: token obtained and persisted")
+            return
+        except Exception as e:
+            err_str = str(e).lower()
+            is_rate_limit = any(k in err_str for k in ("rate", "limit", "429", "too many"))
+            if is_rate_limit and attempt < max_retries:
+                logger.warning("Startup: rate limited (attempt %d/%d), retrying in %ds...",
+                               attempt, max_retries, retry_interval)
+                time.sleep(retry_interval)
+            else:
+                logger.warning("Startup: auth failed: %s — deferring to lazy auth", e)
+                return
 
 
 def get_groww_client():
