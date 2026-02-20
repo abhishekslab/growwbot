@@ -4,8 +4,6 @@ Base algorithm class and AlgoSignal dataclass.
 All algo strategies inherit from BaseAlgorithm and implement evaluate().
 """
 
-import math
-from typing import Optional, List, Dict, Any
 
 from position_monitor import calculate_fees
 

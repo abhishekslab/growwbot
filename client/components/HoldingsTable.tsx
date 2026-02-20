@@ -75,19 +75,33 @@ export default function HoldingsTable({ holdings }: { holdings: Holding[] }) {
               className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
             >
               <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
-                <Link href={`/symbol/${h.symbol}`} className="text-blue-600 hover:underline dark:text-blue-400">
+                <Link
+                  href={`/symbol/${h.symbol}`}
+                  className="text-blue-600 hover:underline dark:text-blue-400"
+                >
                   {h.symbol}
                 </Link>
               </td>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{h.quantity}</td>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatCurrency(h.average_price)}</td>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatCurrency(h.ltp)}</td>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatCurrency(h.current_value)}</td>
-              <td className={`px-4 py-3 font-medium ${h.pnl >= 0 ? "text-green-600" : "text-red-600"}`}>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                {formatCurrency(h.average_price)}
+              </td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                {formatCurrency(h.ltp)}
+              </td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                {formatCurrency(h.current_value)}
+              </td>
+              <td
+                className={`px-4 py-3 font-medium ${h.pnl >= 0 ? "text-green-600" : "text-red-600"}`}
+              >
                 {formatCurrency(h.pnl)}
               </td>
-              <td className={`px-4 py-3 font-medium ${h.pnl_percentage >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {h.pnl_percentage >= 0 ? "+" : ""}{h.pnl_percentage.toFixed(2)}%
+              <td
+                className={`px-4 py-3 font-medium ${h.pnl_percentage >= 0 ? "text-green-600" : "text-red-600"}`}
+              >
+                {h.pnl_percentage >= 0 ? "+" : ""}
+                {h.pnl_percentage.toFixed(2)}%
               </td>
             </tr>
           ))}

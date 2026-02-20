@@ -23,7 +23,7 @@ export default function FeeBreakdownTable({ label, fees }: Props) {
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-800">
       <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-800/50">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <h4 className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
           {label}
         </h4>
       </div>

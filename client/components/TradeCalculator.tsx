@@ -57,7 +57,7 @@ export default function TradeCalculator({
   const [priceEdited, setPriceEdited] = useState(false);
   const displayEntry = priceEdited ? entryPrice : ltp;
 
-  const stopLoss = Math.round((displayEntry * (1 - slOffset / 100)) * 100) / 100;
+  const stopLoss = Math.round(displayEntry * (1 - slOffset / 100) * 100) / 100;
 
   const result: PositionResult = useMemo(
     () =>
@@ -68,9 +68,9 @@ export default function TradeCalculator({
         stopLoss,
         tradeType,
         feeConfig,
-        rrRatio
+        rrRatio,
       ),
-    [capital, riskPercent, displayEntry, stopLoss, tradeType, feeConfig, rrRatio]
+    [capital, riskPercent, displayEntry, stopLoss, tradeType, feeConfig, rrRatio],
   );
 
   const handleEnterTrade = () => {
@@ -147,9 +147,7 @@ export default function TradeCalculator({
               {slOffset}%
             </span>
           </div>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            SL: {fmt(stopLoss)}
-          </p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">SL: {fmt(stopLoss)}</p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -170,10 +168,7 @@ export default function TradeCalculator({
         <StatCard label="Quantity" value={result.quantity.toString()} />
         <StatCard label="Capital Used" value={fmt(result.capitalUsed)} />
         <StatCard label="Risk Amount" value={fmt(result.riskAmount)} />
-        <StatCard
-          label="Risk/Reward"
-          value={result.riskAmount > 0 ? `1:${rrRatio}` : "—"}
-        />
+        <StatCard label="Risk/Reward" value={result.riskAmount > 0 ? `1:${rrRatio}` : "—"} />
       </div>
 
       {/* Fee breakdowns */}
@@ -198,9 +193,7 @@ export default function TradeCalculator({
         disabled={result.quantity <= 0 || entering}
         className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        {entering
-          ? "Entering Trade..."
-          : `Enter Trade — ${result.quantity} shares of ${symbol}`}
+        {entering ? "Entering Trade..." : `Enter Trade — ${result.quantity} shares of ${symbol}`}
       </button>
     </div>
   );

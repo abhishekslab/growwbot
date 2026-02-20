@@ -7,10 +7,7 @@ interface Props {
   staleThresholdMs?: number; // default 30000
 }
 
-export default function LiveIndicator({
-  lastUpdateTime,
-  staleThresholdMs = 30000,
-}: Props) {
+export default function LiveIndicator({ lastUpdateTime, staleThresholdMs = 30000 }: Props) {
   const [isStale, setIsStale] = useState(true);
 
   useEffect(() => {
@@ -40,9 +37,7 @@ export default function LiveIndicator({
       />
       <span
         className={`text-xs font-medium ${
-          isStale
-            ? "text-red-600 dark:text-red-400"
-            : "text-green-600 dark:text-green-400"
+          isStale ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
         }`}
       >
         {isStale ? "Stale" : "Live"}

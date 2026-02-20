@@ -2,8 +2,8 @@
 Symbol detail helpers: historical candles, quote, exchange_token resolution.
 """
 
-import time
 import threading
+import time
 from datetime import datetime, timedelta
 
 # In-memory instrument cache — avoids duplicate API calls when the symbol page

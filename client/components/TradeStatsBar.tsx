@@ -14,7 +14,13 @@ interface Summary {
   total_fees: number;
 }
 
-export default function TradeStatsBar({ summary, paperMode }: { summary: Summary; paperMode?: boolean }) {
+export default function TradeStatsBar({
+  summary,
+  paperMode,
+}: {
+  summary: Summary;
+  paperMode?: boolean;
+}) {
   const stats = [
     { label: "Open", value: String(summary.open_trades) },
     { label: "Won", value: String(summary.won) },
@@ -23,7 +29,10 @@ export default function TradeStatsBar({ summary, paperMode }: { summary: Summary
     {
       label: "Net P&L",
       value: `${summary.net_pnl >= 0 ? "+" : "-"}${fmt(summary.net_pnl)}`,
-      color: summary.net_pnl >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400",
+      color:
+        summary.net_pnl >= 0
+          ? "text-green-600 dark:text-green-400"
+          : "text-red-600 dark:text-red-400",
     },
     { label: "Fees", value: fmt(summary.total_fees) },
   ];
@@ -38,13 +47,13 @@ export default function TradeStatsBar({ summary, paperMode }: { summary: Summary
       {stats.map((s, i) => (
         <div key={s.label} className="flex items-center gap-6">
           {i > 0 && (
-            <div className="hidden h-5 border-l border-gray-200 dark:border-gray-700 sm:block" />
+            <div className="hidden h-5 border-l border-gray-200 sm:block dark:border-gray-700" />
           )}
           <div className="flex items-baseline gap-1.5">
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {s.label}:
-            </span>
-            <span className={`text-sm font-semibold ${s.color || "text-gray-900 dark:text-gray-100"}`}>
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{s.label}:</span>
+            <span
+              className={`text-sm font-semibold ${s.color || "text-gray-900 dark:text-gray-100"}`}
+            >
               {s.value}
             </span>
           </div>

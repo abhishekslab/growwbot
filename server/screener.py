@@ -6,8 +6,8 @@ multi-strategy scanner that reliably returns tradeable stocks every day.
 Uses only stdlib for news/RSS (no new pip dependencies).
 """
 
-import time
 import logging
+import time
 import urllib.request
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed

@@ -39,11 +39,21 @@ function WinRateTable<T extends AnalyticsRow>({
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
-              <th className="px-3 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400">{title.replace("Win Rate by ", "")}</th>
-              <th className="px-3 py-1.5 text-right font-medium text-gray-500 dark:text-gray-400">Trades</th>
-              <th className="px-3 py-1.5 text-right font-medium text-gray-500 dark:text-gray-400">Won</th>
-              <th className="px-3 py-1.5 text-right font-medium text-gray-500 dark:text-gray-400">Win %</th>
-              <th className="px-3 py-1.5 text-right font-medium text-gray-500 dark:text-gray-400">Avg P&L</th>
+              <th className="px-3 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400">
+                {title.replace("Win Rate by ", "")}
+              </th>
+              <th className="px-3 py-1.5 text-right font-medium text-gray-500 dark:text-gray-400">
+                Trades
+              </th>
+              <th className="px-3 py-1.5 text-right font-medium text-gray-500 dark:text-gray-400">
+                Won
+              </th>
+              <th className="px-3 py-1.5 text-right font-medium text-gray-500 dark:text-gray-400">
+                Win %
+              </th>
+              <th className="px-3 py-1.5 text-right font-medium text-gray-500 dark:text-gray-400">
+                Avg P&L
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -52,16 +62,23 @@ function WinRateTable<T extends AnalyticsRow>({
                 <td className="px-3 py-1.5 font-medium text-gray-900 dark:text-gray-100">
                   {String(r[labelKey] as unknown)}
                 </td>
-                <td className="px-3 py-1.5 text-right text-gray-600 dark:text-gray-400">{r.total}</td>
+                <td className="px-3 py-1.5 text-right text-gray-600 dark:text-gray-400">
+                  {r.total}
+                </td>
                 <td className="px-3 py-1.5 text-right text-gray-600 dark:text-gray-400">{r.won}</td>
                 <td className="px-3 py-1.5 text-right">
-                  <span className={`font-medium ${r.win_pct >= 50 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                  <span
+                    className={`font-medium ${r.win_pct >= 50 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                  >
                     {r.win_pct}%
                   </span>
                 </td>
                 <td className="px-3 py-1.5 text-right">
-                  <span className={`font-medium ${r.avg_pnl >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                    {r.avg_pnl >= 0 ? "+" : "-"}{fmt(r.avg_pnl)}
+                  <span
+                    className={`font-medium ${r.avg_pnl >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                  >
+                    {r.avg_pnl >= 0 ? "+" : "-"}
+                    {fmt(r.avg_pnl)}
                   </span>
                 </td>
               </tr>
@@ -85,10 +102,13 @@ function generateInsight(data: Analytics): string | null {
   }
 
   // Find the worst confidence level
-  const worstConf = data.by_confidence.reduce<(AnalyticsRow & { confidence: string }) | null>((worst, r) => {
-    if (r.total >= 2 && (!worst || r.win_pct < worst.win_pct)) return r;
-    return worst;
-  }, null);
+  const worstConf = data.by_confidence.reduce<(AnalyticsRow & { confidence: string }) | null>(
+    (worst, r) => {
+      if (r.total >= 2 && (!worst || r.win_pct < worst.win_pct)) return r;
+      return worst;
+    },
+    null,
+  );
 
   if (worstConf && worstConf.win_pct < 40) {
     return `${worstConf.confidence} confidence trades win only ${worstConf.win_pct}% of the time. Consider filtering these out.`;
@@ -110,7 +130,10 @@ export default function TradeAnalyticsDashboard({ paperMode }: { paperMode: bool
     setLoading(true);
     fetch(`${API_URL}/api/trades/analytics?is_paper=${paperMode}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { setData(d); setLoading(false); })
+      .then((d) => {
+        setData(d);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [paperMode]);
 
@@ -152,9 +175,7 @@ export default function TradeAnalyticsDashboard({ paperMode }: { paperMode: bool
 
   return (
     <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-        Trade Analytics
-      </h2>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Trade Analytics</h2>
 
       {/* Key insight */}
       {insight && (
@@ -166,7 +187,9 @@ export default function TradeAnalyticsDashboard({ paperMode }: { paperMode: bool
       {/* Exit trigger distribution */}
       {data.by_exit_trigger.length > 0 && totalExits > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">Exit Distribution</h3>
+          <h3 className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
+            Exit Distribution
+          </h3>
           <div className="flex h-4 w-full overflow-hidden rounded-full">
             {data.by_exit_trigger.map((r) => (
               <div
@@ -180,7 +203,9 @@ export default function TradeAnalyticsDashboard({ paperMode }: { paperMode: bool
           <div className="mt-1.5 flex gap-4 text-xs text-gray-500 dark:text-gray-400">
             {data.by_exit_trigger.map((r) => (
               <span key={r.trigger} className="flex items-center gap-1">
-                <span className={`inline-block h-2 w-2 rounded-full ${triggerColors[r.trigger] || triggerColors.UNKNOWN}`} />
+                <span
+                  className={`inline-block h-2 w-2 rounded-full ${triggerColors[r.trigger] || triggerColors.UNKNOWN}`}
+                />
                 {r.trigger} {Math.round((r.total / totalExits) * 100)}%
               </span>
             ))}
@@ -190,7 +215,11 @@ export default function TradeAnalyticsDashboard({ paperMode }: { paperMode: bool
 
       {/* Win rate tables */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <WinRateTable title="Win Rate by Confidence" rows={data.by_confidence} labelKey="confidence" />
+        <WinRateTable
+          title="Win Rate by Confidence"
+          rows={data.by_confidence}
+          labelKey="confidence"
+        />
         <WinRateTable title="Win Rate by Trend" rows={data.by_trend} labelKey="trend" />
         <WinRateTable title="Win Rate by Verdict" rows={data.by_verdict} labelKey="verdict" />
       </div>
@@ -198,9 +227,12 @@ export default function TradeAnalyticsDashboard({ paperMode }: { paperMode: bool
       {/* Overreach stats */}
       {data.overreach_stats.total > 0 && (
         <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-2.5 text-xs dark:border-orange-800 dark:bg-orange-950">
-          <span className="font-semibold text-orange-800 dark:text-orange-200">Overreach trades:</span>{" "}
+          <span className="font-semibold text-orange-800 dark:text-orange-200">
+            Overreach trades:
+          </span>{" "}
           <span className="text-orange-700 dark:text-orange-300">
-            {data.overreach_stats.total} trades with target warnings — {data.overreach_stats.win_pct}% win rate
+            {data.overreach_stats.total} trades with target warnings —{" "}
+            {data.overreach_stats.win_pct}% win rate
           </span>
         </div>
       )}

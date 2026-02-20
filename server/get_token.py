@@ -11,9 +11,9 @@ Groww auth endpoint, and saves it to .groww_token for the server to pick up.
 If the auth endpoint is rate-limited, the script waits and retries.
 """
 
+import json
 import os
 import sys
-import json
 import time
 
 from dotenv import load_dotenv

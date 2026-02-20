@@ -12,10 +12,9 @@ Exit: Target = VWAP (mean reversion), SL = entry - 1.5 ATR
 """
 
 import logging
-from typing import Optional, List
 
-from algo_base import BaseAlgorithm, AlgoSignal
-from indicators import calculate_rsi, calculate_atr, calculate_vwap, analyze_volume
+from algo_base import AlgoSignal, BaseAlgorithm
+from indicators import analyze_volume, calculate_atr, calculate_rsi, calculate_vwap
 
 logger = logging.getLogger(__name__)
 

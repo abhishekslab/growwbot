@@ -16,10 +16,8 @@ interface AlgoSignalFeedProps {
 }
 
 const ALGO_COLORS: Record<string, string> = {
-  momentum_scalp:
-    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  mean_reversion:
-    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+  momentum_scalp: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  mean_reversion: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
 };
 
 const SIGNAL_COLORS: Record<string, string> = {
@@ -48,10 +46,7 @@ function formatTime(signal: Signal): string {
   return "";
 }
 
-export default function AlgoSignalFeed({
-  signals,
-  algoNames,
-}: AlgoSignalFeedProps) {
+export default function AlgoSignalFeed({ signals, algoNames }: AlgoSignalFeedProps) {
   if (signals.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
@@ -64,10 +59,7 @@ export default function AlgoSignalFeed({
     <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       <div className="divide-y divide-gray-100 dark:divide-gray-700">
         {signals.map((signal, idx) => (
-          <div
-            key={idx}
-            className="flex items-start gap-3 px-4 py-3"
-          >
+          <div key={idx} className="flex items-start gap-3 px-4 py-3">
             <span className="mt-0.5 shrink-0 text-xs text-gray-400 dark:text-gray-500">
               {formatTime(signal)}
             </span>

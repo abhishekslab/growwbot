@@ -93,9 +93,7 @@ export default function AlgosPage() {
       if (!status?.algos.length) return;
       const allSignals: Signal[] = [];
       for (const algo of status.algos) {
-        const res = await fetch(
-          `${API}/api/algos/${algo.algo_id}/signals?limit=30`
-        );
+        const res = await fetch(`${API}/api/algos/${algo.algo_id}/signals?limit=30`);
         if (res.ok) {
           const data = await res.json();
           allSignals.push(...data);
@@ -151,10 +149,7 @@ export default function AlgosPage() {
     }
   };
 
-  const handleCompoundingToggle = async (
-    algoId: string,
-    compounding: boolean
-  ) => {
+  const handleCompoundingToggle = async (algoId: string, compounding: boolean) => {
     try {
       await fetch(`${API}/api/algos/${algoId}/settings`, {
         method: "PATCH",
@@ -183,9 +178,7 @@ export default function AlgosPage() {
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Algo Trading
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Algo Trading</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Automated paper trading strategies on 1-minute candles
           </p>
@@ -293,12 +286,8 @@ export default function AlgosPage() {
               key={stat.label}
               className="rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
             >
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {stat.label}
-              </p>
-              <p className={`text-lg font-semibold ${stat.color}`}>
-                {stat.value}
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+              <p className={`text-lg font-semibold ${stat.color}`}>{stat.value}</p>
             </div>
           ))}
         </div>
@@ -328,9 +317,7 @@ export default function AlgosPage() {
 
       {/* Signal Feed */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Signal Feed
-        </h2>
+        <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">Signal Feed</h2>
         <AlgoSignalFeed signals={signals} algoNames={algoNames} />
       </div>
     </div>

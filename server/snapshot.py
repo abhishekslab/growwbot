@@ -5,11 +5,10 @@ Survives server restarts — enables instant page load from the last scan result
 """
 
 import json
+import logging
 import os
 import tempfile
 import threading
-import logging
-from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,7 @@ def load_snapshot():
         if not os.path.exists(_SNAPSHOT_PATH):
             return None
         try:
-            with open(_SNAPSHOT_PATH, "r") as f:
+            with open(_SNAPSHOT_PATH) as f:
                 data = json.load(f)
             if not isinstance(data, dict):
                 return None

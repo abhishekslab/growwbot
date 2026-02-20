@@ -30,7 +30,8 @@ export default function OrderConfirmDialog({ order, loading, onConfirm, onCancel
   if (estValue > 0) {
     rows.push([
       "Est. Value",
-      "\u20B9" + estValue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      "\u20B9" +
+        estValue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     ]);
   }
 

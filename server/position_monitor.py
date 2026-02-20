@@ -5,11 +5,10 @@ Polls LTP for all OPEN trades and auto-exits (MARKET SELL) when SL or target is 
 Updates the trade ledger with exit details.
 """
 
-import time
 import logging
 import threading
+import time
 from datetime import datetime, timezone
-from typing import Dict, Optional
 
 from trades_db import list_trades, update_trade
 

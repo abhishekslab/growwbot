@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+*.db
+*.db-shm
+*.db-wal
+.ruff_cache/
+daily_picks_snapshot.json
+.groww_token

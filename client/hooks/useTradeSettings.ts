@@ -60,47 +60,47 @@ export function useTradeSettings() {
 
   const setCapital = useCallback(
     (capital: number) => persist({ ...settings, capital }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setRiskPercent = useCallback(
     (riskPercent: number) => persist({ ...settings, riskPercent }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setFeeConfig = useCallback(
     (feeConfig: FeeConfig) => persist({ ...settings, feeConfig }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setTradeType = useCallback(
     (tradeType: "INTRADAY" | "DELIVERY") => persist({ ...settings, tradeType }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setRrRatio = useCallback(
     (rrRatio: number) => persist({ ...settings, rrRatio }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setMaxPositions = useCallback(
     (maxPositions: number) => persist({ ...settings, maxPositions }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setAutoCompound = useCallback(
     (autoCompound: boolean) => persist({ ...settings, autoCompound }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setTargetCapital = useCallback(
     (targetCapital: number) => persist({ ...settings, targetCapital }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setPaperMode = useCallback(
     (paperMode: boolean) => persist({ ...settings, paperMode }),
-    [settings, persist]
+    [settings, persist],
   );
 
   const setSmallCapitalMode = useCallback(
@@ -118,7 +118,7 @@ export function useTradeSettings() {
         persist({ ...settings, smallCapitalMode: false });
       }
     },
-    [settings, persist]
+    [settings, persist],
   );
 
   return {
@@ -137,7 +137,11 @@ export function useTradeSettings() {
   };
 }
 
-export function useCompoundedCapital(baseCapital: number, autoCompound: boolean, paperMode: boolean = false) {
+export function useCompoundedCapital(
+  baseCapital: number,
+  autoCompound: boolean,
+  paperMode: boolean = false,
+) {
   const [realizedPnl, setRealizedPnl] = useState(0);
   const [loading, setLoading] = useState(false);
 

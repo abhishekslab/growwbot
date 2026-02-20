@@ -1,24 +1,37 @@
-import os
 import asyncio
 import json
-import time
 import logging
+import os
 import threading
+import time
 from typing import Optional
+
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
-from cache import MarketCache
-from snapshot import save_snapshot, load_snapshot
-from trades_db import init_db, create_trade, get_trade, list_trades, update_trade, delete_trade, get_summary, get_realized_pnl, get_learning_analytics, list_algo_signals, get_algo_performance
-from symbol import fetch_candles, fetch_quote, resolve_exchange_token
-from position_monitor import PositionMonitor, compute_exit_pnl
 from algo_engine import AlgoEngine
-from algo_momentum import MomentumScalping
 from algo_mean_reversion import MeanReversion
+from algo_momentum import MomentumScalping
+from cache import MarketCache
+from position_monitor import PositionMonitor, compute_exit_pnl
+from snapshot import load_snapshot, save_snapshot
+from symbol import fetch_candles, fetch_quote, resolve_exchange_token
+from trades_db import (
+    create_trade,
+    delete_trade,
+    get_algo_performance,
+    get_learning_analytics,
+    get_realized_pnl,
+    get_summary,
+    get_trade,
+    init_db,
+    list_algo_signals,
+    list_trades,
+    update_trade,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +130,7 @@ def _save_token(access_token):
 def _load_token():
     """Load persisted token from disk. Returns (token, timestamp) or (None, 0)."""
     try:
-        with open(_TOKEN_FILE, "r") as f:
+        with open(_TOKEN_FILE) as f:
             data = json.load(f)
         token = data["token"]
         token_time = float(data["time"])
@@ -905,7 +918,8 @@ def close_trade_position(trade_id: int):
         trade["entry_price"], exit_price, trade["quantity"], trade_type,
     )
 
-    from datetime import datetime as dt, timezone as tz
+    from datetime import datetime as dt
+    from datetime import timezone as tz
     now = dt.now(tz.utc).isoformat()
 
     updated = update_trade(trade_id, {

@@ -7,15 +7,20 @@ import { useTradeSettings } from "@/hooks/useTradeSettings";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-export default function TradePage({
-  params,
-}: {
-  params: Promise<{ symbol: string }>;
-}) {
+export default function TradePage({ params }: { params: Promise<{ symbol: string }> }) {
   const { symbol } = use(params);
   const router = useRouter();
-  const { capital, riskPercent, feeConfig, rrRatio, loaded, setCapital, setRiskPercent, setRrRatio, paperMode } =
-    useTradeSettings();
+  const {
+    capital,
+    riskPercent,
+    feeConfig,
+    rrRatio,
+    loaded,
+    setCapital,
+    setRiskPercent,
+    setRrRatio,
+    paperMode,
+  } = useTradeSettings();
   const [ltp, setLtp] = useState(0);
   const [ltpLoading, setLtpLoading] = useState(true);
   const [ltpError, setLtpError] = useState<string | null>(null);
@@ -99,9 +104,7 @@ export default function TradePage({
           >
             &larr; Back
           </button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {symbol}
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{symbol}</h1>
           {ltp > 0 && (
             <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               LTP: ₹{ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}

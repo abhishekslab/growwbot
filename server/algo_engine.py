@@ -6,21 +6,24 @@ Creates paper trades via trades_db (same in-process pattern as PositionMonitor).
 """
 
 import json
-import os
-import time
 import logging
+import os
 import threading
+import time
 from collections import deque
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Optional, Any
+from datetime import datetime, timedelta, timezone
 
-from algo_base import BaseAlgorithm, AlgoSignal
 from position_monitor import calculate_fees, compute_exit_pnl
 from snapshot import load_snapshot
 from trades_db import (
-    create_trade, list_trades, update_trade, save_algo_signal,
-    get_algo_settings, upsert_algo_settings, get_algo_net_pnl,
+    create_trade,
     get_algo_deployed_capital,
+    get_algo_net_pnl,
+    get_algo_settings,
+    list_trades,
+    save_algo_signal,
+    update_trade,
+    upsert_algo_settings,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,7 +37,7 @@ _IST_OFFSET = timedelta(hours=5, minutes=30)
 def _load_config():
     # type: () -> dict
     try:
-        with open(_CONFIG_PATH, "r") as f:
+        with open(_CONFIG_PATH) as f:
             return json.load(f)
     except Exception as e:
         logger.warning("Failed to load algo_config.json: %s, using defaults", e)

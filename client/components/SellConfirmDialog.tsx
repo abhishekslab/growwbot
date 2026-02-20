@@ -54,15 +54,11 @@ export default function SellConfirmDialog({ trade, onConfirm, onCancel }: Props)
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Estimated proceeds</span>
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {fmt(proceeds)}
-            </span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">{fmt(proceeds)}</span>
           </div>
         </div>
 
-        {error && (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
+        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="mt-5 flex gap-3">
           <button

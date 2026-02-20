@@ -62,15 +62,11 @@ export default function CacheStatus() {
         <span className="text-gray-600 dark:text-gray-300">Instruments</span>
       </div>
 
-      <span className="text-gray-500 dark:text-gray-400">
-        OHLC: {status.ohlc_batches}
-      </span>
+      <span className="text-gray-500 dark:text-gray-400">OHLC: {status.ohlc_batches}</span>
       <span className="text-gray-500 dark:text-gray-400">
         Historical: {status.historical_symbols}
       </span>
-      <span className="text-gray-500 dark:text-gray-400">
-        News: {status.news_entries}
-      </span>
+      <span className="text-gray-500 dark:text-gray-400">News: {status.news_entries}</span>
 
       {status.last_warmup && (
         <span className="text-gray-400 dark:text-gray-500">

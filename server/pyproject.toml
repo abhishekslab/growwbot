@@ -1,0 +1,20 @@
+[tool.ruff]
+target-version = "py39"
+line-length = 150
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = [
+  "UP006",  # Use `list` instead of `List` — requires 3.10+
+  "UP007",  # Use `X | Y` instead of `Optional[X]` — requires 3.10+
+  "UP035",  # `typing.List` is deprecated — requires 3.9+ generics but inconsistent
+  "UP031",  # Use format specifiers instead of percent format — existing codebase convention
+  "B904",   # raise from — too many existing patterns to change at once
+  "SIM108", # Use ternary — less readable in many cases
+  "SIM105", # Use contextlib.suppress — less explicit than try/except/pass
+  "SIM110", # Use any() — less readable in many cases
+  "E501",   # Line too long — existing codebase has long lines
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["screener", "cache", "snapshot", "trades_db", "symbol"]

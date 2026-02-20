@@ -90,9 +90,7 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
 
   // Warning accuracy
   if (snapshot.warnings.length > 0 && lost) {
-    insights.push(
-      `Had ${snapshot.warnings.length} warning(s) at entry — and it didn't work out.`
-    );
+    insights.push(`Had ${snapshot.warnings.length} warning(s) at entry — and it didn't work out.`);
   }
   if (snapshot.warnings.includes("TARGET_ABOVE_SESSION_HIGH") && lost) {
     insights.push("Target was above session high — price couldn't break through.");
@@ -132,11 +130,14 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
         </h4>
         <div className="space-y-1.5 text-xs">
           <div className="flex items-center gap-2">
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${verdictColors[snapshot.verdict] || verdictColors.WAIT}`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${verdictColors[snapshot.verdict] || verdictColors.WAIT}`}
+            >
               {snapshot.verdict}
             </span>
             <span className="text-gray-600 dark:text-gray-400">
-              Score {snapshot.score > 0 ? "+" : ""}{snapshot.score}
+              Score {snapshot.score > 0 ? "+" : ""}
+              {snapshot.score}
             </span>
             <span className={`font-medium ${confidenceColors[snapshot.confidence] || ""}`}>
               {snapshot.confidence}
@@ -144,28 +145,45 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
           </div>
           <div className="flex justify-between text-gray-600 dark:text-gray-400">
             <span>Trend</span>
-            <span className={snapshot.trend === "BULLISH" ? "text-green-600 dark:text-green-400" : snapshot.trend === "BEARISH" ? "text-red-600 dark:text-red-400" : ""}>
+            <span
+              className={
+                snapshot.trend === "BULLISH"
+                  ? "text-green-600 dark:text-green-400"
+                  : snapshot.trend === "BEARISH"
+                    ? "text-red-600 dark:text-red-400"
+                    : ""
+              }
+            >
               {snapshot.trend}
             </span>
           </div>
           <div className="flex justify-between text-gray-600 dark:text-gray-400">
             <span>RSI</span>
-            <span>{snapshot.rsi} ({snapshot.rsiZone})</span>
+            <span>
+              {snapshot.rsi} ({snapshot.rsiZone})
+            </span>
           </div>
           <div className="flex justify-between text-gray-600 dark:text-gray-400">
             <span>Volume</span>
-            <span>{snapshot.volumeRatio}x {snapshot.volumeConfirmed ? "✓" : ""}</span>
+            <span>
+              {snapshot.volumeRatio}x {snapshot.volumeConfirmed ? "✓" : ""}
+            </span>
           </div>
           {snapshot.vwap > 0 && (
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>VWAP</span>
-              <span>{snapshot.aboveVwap ? "Above" : "Below"} {fmt(snapshot.vwap)}</span>
+              <span>
+                {snapshot.aboveVwap ? "Above" : "Below"} {fmt(snapshot.vwap)}
+              </span>
             </div>
           )}
           {snapshot.patterns.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">
               {snapshot.patterns.map((p, i) => (
-                <span key={i} className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] dark:bg-gray-700">
+                <span
+                  key={i}
+                  className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] dark:bg-gray-700"
+                >
                   {p}
                 </span>
               ))}
@@ -175,7 +193,8 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Day change at entry</span>
               <span className={snapshot.dayChangePct >= 0 ? "text-green-600" : "text-red-600"}>
-                {snapshot.dayChangePct >= 0 ? "+" : ""}{snapshot.dayChangePct.toFixed(1)}%
+                {snapshot.dayChangePct >= 0 ? "+" : ""}
+                {snapshot.dayChangePct.toFixed(1)}%
               </span>
             </div>
           )}
@@ -210,11 +229,15 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
           {trade.exit_trigger && (
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Exit Trigger</span>
-              <span className={`font-medium ${
-                trade.exit_trigger === "TARGET" ? "text-green-600 dark:text-green-400"
-                  : trade.exit_trigger === "SL" ? "text-red-600 dark:text-red-400"
-                    : "text-gray-600 dark:text-gray-400"
-              }`}>
+              <span
+                className={`font-medium ${
+                  trade.exit_trigger === "TARGET"
+                    ? "text-green-600 dark:text-green-400"
+                    : trade.exit_trigger === "SL"
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-gray-600 dark:text-gray-400"
+                }`}
+              >
                 {trade.exit_trigger}
               </span>
             </div>
@@ -227,8 +250,11 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
           )}
           <div className="flex justify-between border-t border-gray-100 pt-1.5 dark:border-gray-700">
             <span className="text-gray-600 dark:text-gray-400">Net P&L</span>
-            <span className={`font-semibold ${pnl >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-              {pnl >= 0 ? "+" : "-"}{fmt(pnl)}
+            <span
+              className={`font-semibold ${pnl >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+            >
+              {pnl >= 0 ? "+" : "-"}
+              {fmt(pnl)}
             </span>
           </div>
         </div>
@@ -236,9 +262,7 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
 
       {/* Insights */}
       <div>
-        <h4 className="mb-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-          Insights
-        </h4>
+        <h4 className="mb-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Insights</h4>
         {insights.length > 0 ? (
           <ul className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
             {insights.map((insight, i) => (

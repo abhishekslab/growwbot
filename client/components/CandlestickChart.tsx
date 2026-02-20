@@ -94,7 +94,7 @@ export default function CandlestickChart({ candles, liveLtp }: Props) {
     if (!candleSeriesRef.current || !volumeSeriesRef.current || candles.length === 0) return;
 
     const validCandles = candles.filter(
-      (c) => c.open > 0 && c.high > 0 && c.low > 0 && c.close > 0
+      (c) => c.open > 0 && c.high > 0 && c.low > 0 && c.close > 0,
     );
 
     const candleData: CandlestickData<Time>[] = validCandles.map((c) => ({

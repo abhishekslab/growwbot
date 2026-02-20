@@ -85,7 +85,7 @@ export function calculateEMA(closes: number[], period: number): number[] {
 
 export function calculateRSI(
   candles: Candle[],
-  period = 14
+  period = 14,
 ): { values: number[]; current: number; zone: "OVERSOLD" | "NEUTRAL" | "OVERBOUGHT" } {
   const closes = candles.map((c) => c.close);
   const values: number[] = new Array(closes.length).fill(NaN);
@@ -128,7 +128,7 @@ export function calculateRSI(
 
 export function analyzeVolume(
   candles: Candle[],
-  lookback = 20
+  lookback = 20,
 ): { current: number; average: number; ratio: number; confirmed: boolean } {
   if (candles.length < 2) {
     return { current: 0, average: 0, ratio: 0, confirmed: false };
@@ -147,7 +147,7 @@ export function analyzeVolume(
 
 export function calculateVWAP(
   candles: Candle[],
-  ltp?: number
+  ltp?: number,
 ): { vwap: number; aboveVwap: boolean } {
   if (candles.length === 0) return { vwap: 0, aboveVwap: false };
 
@@ -374,7 +374,7 @@ export function findMinProfitableQty(
   sl: number,
   tradeType: "INTRADAY" | "DELIVERY" = "DELIVERY",
   config: FeeConfig = DEFAULT_FEE_CONFIG,
-  rrRatio: number = 2
+  rrRatio: number = 2,
 ): number {
   if (entry <= 0 || sl >= entry) return -1;
 
@@ -408,7 +408,7 @@ export function applyCapitalFilter(
   feeConfig: FeeConfig,
   riskPercent: number,
   rrRatio: number,
-  smallCapitalMode: boolean
+  smallCapitalMode: boolean,
 ): CapitalFilterResult {
   let verdict = analysis.verdict;
   let feeWarning = false;
@@ -510,7 +510,10 @@ export function analyzeCandles(candles: Candle[], ltp?: number): AnalysisResult 
         score += 10;
         reasons.push({ label: "EMA 9/21 bullish crossover (confirmed)", sentiment: "BULLISH" });
       } else {
-        reasons.push({ label: "EMA 9/21 crossover (unconfirmed, EMAs tight)", sentiment: "NEUTRAL" });
+        reasons.push({
+          label: "EMA 9/21 crossover (unconfirmed, EMAs tight)",
+          sentiment: "NEUTRAL",
+        });
       }
       break;
     }
@@ -520,10 +523,16 @@ export function analyzeCandles(candles: Candle[], ltp?: number): AnalysisResult 
   if (vwapResult.vwap > 0) {
     if (vwapResult.aboveVwap) {
       score += 15;
-      reasons.push({ label: `Above VWAP ${vwapResult.vwap.toLocaleString("en-IN")} (buyers in control)`, sentiment: "BULLISH" });
+      reasons.push({
+        label: `Above VWAP ${vwapResult.vwap.toLocaleString("en-IN")} (buyers in control)`,
+        sentiment: "BULLISH",
+      });
     } else {
       score -= 15;
-      reasons.push({ label: `Below VWAP ${vwapResult.vwap.toLocaleString("en-IN")} (sellers in control)`, sentiment: "BEARISH" });
+      reasons.push({
+        label: `Below VWAP ${vwapResult.vwap.toLocaleString("en-IN")} (sellers in control)`,
+        sentiment: "BEARISH",
+      });
     }
   }
 
@@ -564,14 +573,20 @@ export function analyzeCandles(candles: Candle[], ltp?: number): AnalysisResult 
     reasons.push({ label: `RSI ${rsi} (overbought — high reversion risk)`, sentiment: "BEARISH" });
   } else {
     score -= 40;
-    reasons.push({ label: `RSI ${rsi} (extremely overbought — pullback imminent)`, sentiment: "BEARISH" });
+    reasons.push({
+      label: `RSI ${rsi} (extremely overbought — pullback imminent)`,
+      sentiment: "BEARISH",
+    });
   }
 
   // ── Volume (tiered: 3x, 2x, <0.8x) — flipped when overbought ───
   if (rsi > 70 && vol.ratio >= 2.0) {
     // High volume + overbought = likely distribution, not accumulation
     score -= 10;
-    reasons.push({ label: `Volume ${vol.ratio}x avg + RSI ${rsi} (distribution signal)`, sentiment: "BEARISH" });
+    reasons.push({
+      label: `Volume ${vol.ratio}x avg + RSI ${rsi} (distribution signal)`,
+      sentiment: "BEARISH",
+    });
   } else if (vol.ratio >= 3.0) {
     score += 20;
     reasons.push({ label: `Volume ${vol.ratio}x avg (very strong)`, sentiment: "BULLISH" });
@@ -629,8 +644,7 @@ export function analyzeCandles(candles: Candle[], ltp?: number): AnalysisResult 
   score = Math.max(-100, Math.min(100, score));
 
   // Verdict — with hard overbought gate
-  let verdict: "BUY" | "WAIT" | "AVOID" =
-    score >= 30 ? "BUY" : score >= -10 ? "WAIT" : "AVOID";
+  let verdict: "BUY" | "WAIT" | "AVOID" = score >= 30 ? "BUY" : score >= -10 ? "WAIT" : "AVOID";
 
   if (rsi > 85) {
     verdict = "AVOID";
@@ -694,7 +708,7 @@ export function computeTradeWarnings(
   sessionHigh: number,
   dayChangePct: number,
   atr: number,
-  isFnO: boolean
+  isFnO: boolean,
 ): TradeWarning[] {
   const warnings: TradeWarning[] = [];
 
@@ -754,7 +768,7 @@ export function buildEntrySnapshot(
   stopLoss: number,
   dayChangePct: number,
   sessionHigh: number,
-  warnings: TradeWarning[]
+  warnings: TradeWarning[],
 ): EntrySnapshot {
   return {
     verdict: analysis.verdict,

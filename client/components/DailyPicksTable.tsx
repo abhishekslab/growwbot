@@ -45,16 +45,24 @@ interface Props {
   analysisPhase?: "idle" | "running" | "done";
 }
 
-export default function DailyPicksTable({ results, stage, flashSymbols, smallCapitalMode = false, showTradeableOnly = false, analysisPhase = "idle" }: Props) {
+export default function DailyPicksTable({
+  results,
+  stage,
+  flashSymbols,
+  smallCapitalMode = false,
+  showTradeableOnly = false,
+  analysisPhase = "idle",
+}: Props) {
   const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey>("rank");
   const [sortAsc, setSortAsc] = useState(true);
 
   const isInPriceRange = (ltp: number) => ltp >= 100 && ltp <= 300;
 
-  const filtered = showTradeableOnly && smallCapitalMode
-    ? results.filter((r) => isInPriceRange(r.ltp) && r.analysisVerdict !== "AVOID")
-    : results;
+  const filtered =
+    showTradeableOnly && smallCapitalMode
+      ? results.filter((r) => isInPriceRange(r.ltp) && r.analysisVerdict !== "AVOID")
+      : results;
 
   const sorted = [...filtered].sort((a, b) => {
     const aVal = a[sortKey];
@@ -127,7 +135,7 @@ export default function DailyPicksTable({ results, stage, flashSymbols, smallCap
                 key={r.symbol}
                 onClick={() => router.push(`/symbol/${r.symbol}`)}
                 className={`cursor-pointer border-b transition-all duration-300 ${
-                  dimmed ? "opacity-50 " : ""
+                  dimmed ? "opacity-50" : ""
                 }${
                   isOther
                     ? "border-gray-100 text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-500 dark:hover:bg-gray-800/50"
@@ -168,17 +176,18 @@ export default function DailyPicksTable({ results, stage, flashSymbols, smallCap
 
                 {/* Chg% */}
                 <td
-                  className={`px-3 py-2 tabular-nums font-medium ${
-                    isNeg
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-green-600 dark:text-green-400"
+                  className={`px-3 py-2 font-medium tabular-nums ${
+                    isNeg ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
                   }`}
                 >
-                  {isNeg ? "" : "+"}{r.day_change_pct.toFixed(2)}%
+                  {isNeg ? "" : "+"}
+                  {r.day_change_pct.toFixed(2)}%
                 </td>
 
                 {/* Volume */}
-                <td className={`px-3 py-2 tabular-nums ${isOther ? "" : "text-gray-700 dark:text-gray-300"}`}>
+                <td
+                  className={`px-3 py-2 tabular-nums ${isOther ? "" : "text-gray-700 dark:text-gray-300"}`}
+                >
                   {!volumeEnriched || r.volume === 0 ? (
                     <span className="animate-pulse text-gray-400">&mdash;</span>
                   ) : (
@@ -187,7 +196,9 @@ export default function DailyPicksTable({ results, stage, flashSymbols, smallCap
                 </td>
 
                 {/* Turnover */}
-                <td className={`px-3 py-2 tabular-nums ${isOther ? "" : "text-gray-700 dark:text-gray-300"}`}>
+                <td
+                  className={`px-3 py-2 tabular-nums ${isOther ? "" : "text-gray-700 dark:text-gray-300"}`}
+                >
                   {!volumeEnriched || r.turnover === 0 ? (
                     <span className="animate-pulse text-gray-400">&mdash;</span>
                   ) : (
@@ -202,21 +213,27 @@ export default function DailyPicksTable({ results, stage, flashSymbols, smallCap
                       <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-900 dark:text-green-300">
                         BUY
                       </span>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{r.analysisScore}</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {r.analysisScore}
+                      </span>
                     </span>
                   ) : r.analysisVerdict === "WAIT" ? (
                     <span className="inline-flex items-center gap-1">
                       <span className="rounded bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
                         WAIT
                       </span>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{r.analysisScore}</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {r.analysisScore}
+                      </span>
                     </span>
                   ) : r.analysisVerdict === "AVOID" ? (
                     <span className="inline-flex items-center gap-1">
                       <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-900 dark:text-red-300">
                         AVOID
                       </span>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{r.analysisScore}</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {r.analysisScore}
+                      </span>
                     </span>
                   ) : analysisPhase === "running" ? (
                     <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-gray-300 dark:bg-gray-600" />
@@ -228,7 +245,7 @@ export default function DailyPicksTable({ results, stage, flashSymbols, smallCap
                 {/* News icon */}
                 <td className="px-3 py-2">
                   {!newsEnriched && volumeEnriched ? (
-                    <span className="animate-pulse text-gray-400 text-xs">...</span>
+                    <span className="animate-pulse text-xs text-gray-400">...</span>
                   ) : r.news_link ? (
                     <a
                       href={r.news_link}

@@ -10,8 +10,8 @@ interface Props {
 export default function QuoteHeader({ quote, liveLtp }: Props) {
   const ltp = liveLtp ?? quote?.ltp ?? 0;
   const prevClose = quote?.prev_close ?? 0;
-  const change = prevClose ? ltp - prevClose : quote?.change ?? 0;
-  const changePct = prevClose ? (change / prevClose) * 100 : quote?.change_pct ?? 0;
+  const change = prevClose ? ltp - prevClose : (quote?.change ?? 0);
+  const changePct = prevClose ? (change / prevClose) * 100 : (quote?.change_pct ?? 0);
   const positive = change >= 0;
 
   const fmt = (val: number) =>
@@ -37,9 +37,7 @@ export default function QuoteHeader({ quote, liveLtp }: Props) {
         >
           {fmt(ltp)}
         </span>
-        <span
-          className={`text-lg font-medium ${positive ? "text-green-600" : "text-red-600"}`}
-        >
+        <span className={`text-lg font-medium ${positive ? "text-green-600" : "text-red-600"}`}>
           {positive ? "+" : ""}
           {fmt(change)} ({positive ? "+" : ""}
           {changePct.toFixed(2)}%)
@@ -51,9 +49,7 @@ export default function QuoteHeader({ quote, liveLtp }: Props) {
           <div key={s.label}>
             <span className="font-medium text-gray-500 dark:text-gray-500">{s.label}: </span>
             <span className="text-gray-900 dark:text-gray-200">
-              {s.label === "Volume"
-                ? (s.value ?? 0).toLocaleString("en-IN")
-                : fmt(s.value ?? 0)}
+              {s.label === "Volume" ? (s.value ?? 0).toLocaleString("en-IN") : fmt(s.value ?? 0)}
             </span>
           </div>
         ))}

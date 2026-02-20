@@ -38,26 +38,20 @@ export default function TradeSettingsBar({
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          Capital
-        </label>
+        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Capital</label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-            ₹
-          </span>
+          <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-gray-400">₹</span>
           <input
             type="number"
             value={capital}
             onChange={(e) => onCapitalChange(Number(e.target.value))}
-            className="w-36 rounded-lg border border-gray-300 bg-white py-1.5 pl-7 pr-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+            className="w-36 rounded-lg border border-gray-300 bg-white py-1.5 pr-3 pl-7 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          Risk
-        </label>
+        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Risk</label>
         <div className="relative">
           <input
             type="number"
@@ -66,11 +60,9 @@ export default function TradeSettingsBar({
             max="10"
             value={riskPercent}
             onChange={(e) => onRiskChange(Number(e.target.value))}
-            className="w-20 rounded-lg border border-gray-300 bg-white py-1.5 pl-3 pr-7 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+            className="w-20 rounded-lg border border-gray-300 bg-white py-1.5 pr-7 pl-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-            %
-          </span>
+          <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-gray-400">%</span>
         </div>
       </div>
 
@@ -99,9 +91,7 @@ export default function TradeSettingsBar({
 
       {/* R:R Ratio */}
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          R:R
-        </label>
+        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">R:R</label>
         <div className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700">
           {RR_OPTIONS.map((opt, i) => (
             <button

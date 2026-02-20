@@ -87,9 +87,7 @@ export default function TradeHistoryTable({ trades }: Props) {
     <div>
       {/* Section header with inline filters */}
       <div className="mb-3 flex flex-wrap items-center gap-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Trade History
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Trade History</h2>
         <div className="flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700">
           {statusFilters.map((s) => (
             <button
@@ -119,9 +117,7 @@ export default function TradeHistoryTable({ trades }: Props) {
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white px-4 py-6 text-center dark:border-gray-800 dark:bg-gray-900">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {trades.length === 0
-              ? "No closed trades yet."
-              : "No trades matching this filter."}
+            {trades.length === 0 ? "No closed trades yet." : "No trades matching this filter."}
           </p>
         </div>
       ) : (
@@ -142,87 +138,101 @@ export default function TradeHistoryTable({ trades }: Props) {
                 <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
                   Entry → Exit
                 </th>
-                <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Qty</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Fees</th>
-                <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+                  Qty
+                </th>
+                <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+                  Fees
+                </th>
+                <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400">
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((t) => (
                 <>
-                <tr
-                  key={t.id}
-                  onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
-                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
-                >
-                  <td className="px-3 py-2">
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{t.symbol}</span>
-                    {t.is_paper ? (
-                      <span className="ml-1.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
-                        PAPER
+                  <tr
+                    key={t.id}
+                    onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
+                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
+                  >
+                    <td className="px-3 py-2">
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                        {t.symbol}
                       </span>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
-                    {new Date(t.entry_date).toLocaleDateString("en-IN")}
-                  </td>
-                  <td className="px-3 py-2">
-                    {t.actual_pnl !== null ? (
-                      <span
-                        className={`font-medium ${
-                          t.actual_pnl >= 0 ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {t.actual_pnl >= 0 ? "+" : "-"}{fmt(t.actual_pnl)}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
-                    {fmt(t.entry_price)}
-                    {t.exit_price ? (
-                      <span> → {fmt(t.exit_price)}</span>
-                    ) : (
-                      <span className="text-gray-400"> → —</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{t.quantity}</td>
-                  <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">
-                    {t.actual_fees !== null ? fmt(t.actual_fees) : "—"}
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          statusBadge[t.status] || statusBadge.CLOSED
-                        }`}
-                      >
-                        {t.status}
-                      </span>
-                      {t.exit_trigger && (
+                      {t.is_paper ? (
+                        <span className="ml-1.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
+                          PAPER
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
+                      {new Date(t.entry_date).toLocaleDateString("en-IN")}
+                    </td>
+                    <td className="px-3 py-2">
+                      {t.actual_pnl !== null ? (
                         <span
-                          className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                            t.exit_trigger === "TARGET"
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
-                              : t.exit_trigger === "SL"
-                                ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
-                                : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                          className={`font-medium ${
+                            t.actual_pnl >= 0 ? "text-green-600" : "text-red-600"
                           }`}
                         >
-                          {t.exit_trigger}
+                          {t.actual_pnl >= 0 ? "+" : "-"}
+                          {fmt(t.actual_pnl)}
                         </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
                       )}
-                    </div>
-                  </td>
-                </tr>
-                {expandedId === t.id && (
-                  <tr key={`${t.id}-expanded`} className="border-b border-gray-100 dark:border-gray-800">
-                    <td colSpan={7} className="bg-gray-50 dark:bg-gray-800/50">
-                      <TradeLearningCard trade={t} />
+                    </td>
+                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
+                      {fmt(t.entry_price)}
+                      {t.exit_price ? (
+                        <span> → {fmt(t.exit_price)}</span>
+                      ) : (
+                        <span className="text-gray-400"> → —</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
+                      {t.quantity}
+                    </td>
+                    <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">
+                      {t.actual_fees !== null ? fmt(t.actual_fees) : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                            statusBadge[t.status] || statusBadge.CLOSED
+                          }`}
+                        >
+                          {t.status}
+                        </span>
+                        {t.exit_trigger && (
+                          <span
+                            className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                              t.exit_trigger === "TARGET"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
+                                : t.exit_trigger === "SL"
+                                  ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
+                                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                            }`}
+                          >
+                            {t.exit_trigger}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                )}
+                  {expandedId === t.id && (
+                    <tr
+                      key={`${t.id}-expanded`}
+                      className="border-b border-gray-100 dark:border-gray-800"
+                    >
+                      <td colSpan={7} className="bg-gray-50 dark:bg-gray-800/50">
+                        <TradeLearningCard trade={t} />
+                      </td>
+                    </tr>
+                  )}
                 </>
               ))}
             </tbody>

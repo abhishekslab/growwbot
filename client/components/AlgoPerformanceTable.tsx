@@ -19,10 +19,7 @@ interface AlgoPerformanceTableProps {
   algoNames: Record<string, string>;
 }
 
-export default function AlgoPerformanceTable({
-  data,
-  algoNames,
-}: AlgoPerformanceTableProps) {
+export default function AlgoPerformanceTable({ data, algoNames }: AlgoPerformanceTableProps) {
   if (data.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
@@ -31,8 +28,7 @@ export default function AlgoPerformanceTable({
     );
   }
 
-  const fmt = (n: number) =>
-    (n >= 0 ? "+" : "") + "\u20B9" + n.toLocaleString("en-IN");
+  const fmt = (n: number) => (n >= 0 ? "+" : "") + "\u20B9" + n.toLocaleString("en-IN");
 
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
@@ -54,7 +50,7 @@ export default function AlgoPerformanceTable({
             ].map((h) => (
               <th
                 key={h}
-                className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400"
               >
                 {h}
               </th>
@@ -64,7 +60,7 @@ export default function AlgoPerformanceTable({
         <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
           {data.map((row) => (
             <tr key={row.algo_id}>
-              <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+              <td className="px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-gray-100">
                 {algoNames[row.algo_id] || row.algo_id}
               </td>
               <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
@@ -73,12 +69,8 @@ export default function AlgoPerformanceTable({
               <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                 {row.total_trades}
               </td>
-              <td className="px-4 py-3 text-sm text-green-600 dark:text-green-400">
-                {row.won}
-              </td>
-              <td className="px-4 py-3 text-sm text-red-600 dark:text-red-400">
-                {row.lost}
-              </td>
+              <td className="px-4 py-3 text-sm text-green-600 dark:text-green-400">{row.won}</td>
+              <td className="px-4 py-3 text-sm text-red-600 dark:text-red-400">{row.lost}</td>
               <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                 {row.win_rate}%
               </td>
@@ -98,7 +90,8 @@ export default function AlgoPerformanceTable({
                 {row.avg_loss ? fmt(row.avg_loss) : "-"}
               </td>
               <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                {"\u20B9"}{row.total_fees.toLocaleString("en-IN")}
+                {"\u20B9"}
+                {row.total_fees.toLocaleString("en-IN")}
               </td>
               <td className="px-4 py-3 text-sm text-red-600 dark:text-red-400">
                 {row.worst_trade ? fmt(row.worst_trade) : "-"}

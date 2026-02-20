@@ -8,7 +8,6 @@ Python 3.9 compatible — uses List[float] not list[float].
 """
 
 import math
-from typing import List, Dict, Optional, Any
 
 
 def calculate_ema(closes, period):

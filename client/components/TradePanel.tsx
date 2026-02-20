@@ -2,10 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useTradeSettings, useCompoundedCapital } from "@/hooks/useTradeSettings";
-import {
-  calculatePositionSize,
-  calculateFeeAdjustedTarget,
-} from "@/lib/tradeCalculator";
+import { calculatePositionSize, calculateFeeAdjustedTarget } from "@/lib/tradeCalculator";
 import { Candle } from "@/types/symbol";
 import {
   analyzeCandles,
@@ -47,7 +44,18 @@ interface Props {
 }
 
 export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
-  const { capital, riskPercent, feeConfig, rrRatio, tradeType, setTradeType, smallCapitalMode, autoCompound, maxPositions, paperMode } = useTradeSettings();
+  const {
+    capital,
+    riskPercent,
+    feeConfig,
+    rrRatio,
+    tradeType,
+    setTradeType,
+    smallCapitalMode,
+    autoCompound,
+    maxPositions,
+    paperMode,
+  } = useTradeSettings();
   const { effectiveCapital, realizedPnl } = useCompoundedCapital(capital, autoCompound, paperMode);
 
   const [entryPrice, setEntryPrice] = useState(0);
@@ -93,9 +101,7 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
     fetch(`${API_URL}/api/trades/active?is_paper=${paperMode}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((trades: ActiveTrade[]) => {
-        const match = trades.find(
-          (t: ActiveTrade) => t.symbol === symbol && t.status === "OPEN"
-        );
+        const match = trades.find((t: ActiveTrade) => t.symbol === symbol && t.status === "OPEN");
         setActiveTrade(match || null);
         setActivePositionCount(trades.length);
       })
@@ -105,7 +111,7 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
   // Computed values
   const slPrice = useMemo(
     () => Math.round(entryPrice * (1 - slOffsetPct / 100) * 100) / 100,
-    [entryPrice, slOffsetPct]
+    [entryPrice, slOffsetPct],
   );
 
   const position = useMemo(
@@ -117,9 +123,9 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
         slPrice,
         tradeType,
         feeConfig,
-        rrRatio
+        rrRatio,
       ),
-    [effectiveCapital, riskPercent, entryPrice, slPrice, tradeType, feeConfig, rrRatio]
+    [effectiveCapital, riskPercent, entryPrice, slPrice, tradeType, feeConfig, rrRatio],
   );
 
   const feeAdjusted = useMemo(
@@ -130,9 +136,9 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
         position.quantity,
         tradeType,
         feeConfig,
-        rrRatio
+        rrRatio,
       ),
-    [entryPrice, slPrice, position.quantity, tradeType, feeConfig, rrRatio]
+    [entryPrice, slPrice, position.quantity, tradeType, feeConfig, rrRatio],
   );
 
   const minProfitableQty = useMemo(() => {
@@ -152,9 +158,19 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
       feeConfig,
       riskPercent,
       rrRatio,
-      smallCapitalMode
+      smallCapitalMode,
     );
-  }, [analysis, entryPrice, slPrice, effectiveCapital, tradeType, feeConfig, riskPercent, rrRatio, smallCapitalMode]);
+  }, [
+    analysis,
+    entryPrice,
+    slPrice,
+    effectiveCapital,
+    tradeType,
+    feeConfig,
+    riskPercent,
+    rrRatio,
+    smallCapitalMode,
+  ]);
 
   const effectiveVerdict = capitalFilter?.verdict ?? analysis?.verdict ?? "WAIT";
 
@@ -168,7 +184,7 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
       quote?.high || 0,
       quote?.change_pct || 0,
       analysis.atr,
-      false
+      false,
     );
     // Add weak signal override warning
     if (analysis.verdict !== "BUY" && effectiveVerdict !== "AVOID") {
@@ -205,7 +221,7 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
           slPrice,
           quote?.change_pct || 0,
           quote?.high || 0,
-          tradeWarnings
+          tradeWarnings,
         );
         entrySnapshotStr = JSON.stringify(snapshot);
       }
@@ -230,8 +246,7 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
         }),
       });
       const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.detail || "Buy failed");
+      if (!res.ok) throw new Error(data.detail || "Buy failed");
       setToast({
         msg: `Order placed! Trade #${data.trade?.id || "—"}`,
         type: "success",
@@ -249,13 +264,9 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
     if (!activeTrade) return;
     setClosing(true);
     try {
-      const res = await fetch(
-        `${API_URL}/api/trades/${activeTrade.id}/close`,
-        { method: "POST" }
-      );
+      const res = await fetch(`${API_URL}/api/trades/${activeTrade.id}/close`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.detail || "Close failed");
+      if (!res.ok) throw new Error(data.detail || "Close failed");
       setToast({ msg: "Position closed", type: "success" });
       setActiveTrade(null);
     } catch (err: unknown) {
@@ -268,8 +279,7 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
 
   // Active trade view
   if (activeTrade) {
-    const unrealizedPnl =
-      (ltp - activeTrade.entry_price) * activeTrade.quantity;
+    const unrealizedPnl = (ltp - activeTrade.entry_price) * activeTrade.quantity;
     const isProfit = unrealizedPnl >= 0;
 
     return (
@@ -292,25 +302,17 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">SL</span>
-            <span className="text-red-600 dark:text-red-400">
-              {fmt(activeTrade.stop_loss)}
-            </span>
+            <span className="text-red-600 dark:text-red-400">{fmt(activeTrade.stop_loss)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Target</span>
-            <span className="text-green-600 dark:text-green-400">
-              {fmt(activeTrade.target)}
-            </span>
+            <span className="text-green-600 dark:text-green-400">{fmt(activeTrade.target)}</span>
           </div>
           <div className="flex justify-between border-t border-gray-100 pt-2 dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">
-              Unrealized P&L
-            </span>
+            <span className="text-gray-500 dark:text-gray-400">Unrealized P&L</span>
             <span
               className={`font-semibold ${
-                isProfit
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+                isProfit ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
               }`}
             >
               {isProfit ? "+" : ""}
@@ -421,8 +423,14 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
             <div className="flex items-center justify-between">
               <span className="text-gray-500 dark:text-gray-400">Trend</span>
               <span className={trendArrow[analysis.trend].color}>
-                EMA 9{analysis.trend === "BULLISH" ? " > " : analysis.trend === "BEARISH" ? " < " : " = "}21{" "}
-                {trendArrow[analysis.trend].icon} {analysis.trend.charAt(0) + analysis.trend.slice(1).toLowerCase()}
+                EMA 9
+                {analysis.trend === "BULLISH"
+                  ? " > "
+                  : analysis.trend === "BEARISH"
+                    ? " < "
+                    : " = "}
+                21 {trendArrow[analysis.trend].icon}{" "}
+                {analysis.trend.charAt(0) + analysis.trend.slice(1).toLowerCase()}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -456,7 +464,13 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
                 }
               >
                 {analysis.volumeRatio}x avg{" "}
-                {analysis.volumeRatio >= 3.0 ? "\u25B2 Very Strong" : analysis.volumeConfirmed ? "\u25B2 Strong" : analysis.volumeRatio < 0.8 ? "\u25BC Weak" : ""}
+                {analysis.volumeRatio >= 3.0
+                  ? "\u25B2 Very Strong"
+                  : analysis.volumeConfirmed
+                    ? "\u25B2 Strong"
+                    : analysis.volumeRatio < 0.8
+                      ? "\u25BC Weak"
+                      : ""}
               </span>
             </div>
             {analysis.vwap > 0 && (
@@ -509,7 +523,9 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
           {/* Suggested SL and min qty */}
           <div className="mt-2 space-y-0.5 border-t border-gray-200 pt-2 text-xs dark:border-gray-600">
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Suggested SL {analysis.atr > 0 ? "(ATR)" : "(swing)"}</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                Suggested SL {analysis.atr > 0 ? "(ATR)" : "(swing)"}
+              </span>
               <span className="font-medium text-gray-900 dark:text-gray-100">
                 {fmt(analysis.suggestedSL)}
               </span>
@@ -566,9 +582,7 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
 
       {/* Entry Price */}
       <div className="mb-3">
-        <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
-          Entry Price
-        </label>
+        <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Entry Price</label>
         <input
           type="number"
           step="0.05"
@@ -630,7 +644,11 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Effective Capital</span>
             <span className="font-medium text-purple-600 dark:text-purple-400">
-              {fmt(effectiveCapital)} <span className="text-[10px] text-gray-400">({realizedPnl >= 0 ? "+" : ""}{fmt(realizedPnl)})</span>
+              {fmt(effectiveCapital)}{" "}
+              <span className="text-[10px] text-gray-400">
+                ({realizedPnl >= 0 ? "+" : ""}
+                {fmt(realizedPnl)})
+              </span>
             </span>
           </div>
         )}
@@ -642,37 +660,26 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500 dark:text-gray-400">Quantity</span>
-          <span className="text-gray-900 dark:text-gray-100">
-            {position.quantity}
-          </span>
+          <span className="text-gray-900 dark:text-gray-100">{position.quantity}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500 dark:text-gray-400">Capital Used</span>
-          <span className="text-gray-900 dark:text-gray-100">
-            {fmt(position.capitalUsed)}
-          </span>
+          <span className="text-gray-900 dark:text-gray-100">{fmt(position.capitalUsed)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500 dark:text-gray-400">Est. Fees</span>
           <span className="text-gray-900 dark:text-gray-100">
-            {fmt(
-              position.feesEntry.total +
-                position.feesExitTarget.total
-            )}
+            {fmt(position.feesEntry.total + position.feesExitTarget.total)}
           </span>
         </div>
         <div className="flex justify-between border-t border-gray-200 pt-1.5 dark:border-gray-700">
-          <span className="text-gray-500 dark:text-gray-400">
-            Net P&L at Target
-          </span>
+          <span className="text-gray-500 dark:text-gray-400">Net P&L at Target</span>
           <span className="font-medium text-green-600 dark:text-green-400">
             +{fmt(feeAdjusted.netProfit)}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">
-            Net Loss at SL
-          </span>
+          <span className="text-gray-500 dark:text-gray-400">Net Loss at SL</span>
           <span className="font-medium text-red-600 dark:text-red-400">
             {fmt(feeAdjusted.netLoss)}
           </span>

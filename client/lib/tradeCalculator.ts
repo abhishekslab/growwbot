@@ -36,7 +36,7 @@ export function calculateFees(
   qty: number,
   side: "BUY" | "SELL",
   tradeType: "INTRADAY" | "DELIVERY",
-  config: FeeConfig = DEFAULT_FEE_CONFIG
+  config: FeeConfig = DEFAULT_FEE_CONFIG,
 ): FeeBreakdown {
   const turnover = price * qty;
 
@@ -75,7 +75,7 @@ export function calculatePositionSize(
   stopLoss: number,
   tradeType: "INTRADAY" | "DELIVERY",
   config: FeeConfig = DEFAULT_FEE_CONFIG,
-  rrRatio: number = 2
+  rrRatio: number = 2,
 ): PositionResult {
   const riskPerShare = Math.abs(entryPrice - stopLoss);
   if (riskPerShare === 0) {
@@ -96,9 +96,7 @@ export function calculatePositionSize(
 
   // Risk-reward target
   const isLong = entryPrice > stopLoss;
-  const target = isLong
-    ? entryPrice + riskPerShare * rrRatio
-    : entryPrice - riskPerShare * rrRatio;
+  const target = isLong ? entryPrice + riskPerShare * rrRatio : entryPrice - riskPerShare * rrRatio;
 
   const capitalUsed = quantity * entryPrice;
   const riskAmount = quantity * riskPerShare;
@@ -132,7 +130,7 @@ export function calculateTradeExit(
   exitPrice: number,
   quantity: number,
   tradeType: "INTRADAY" | "DELIVERY",
-  config: FeeConfig = DEFAULT_FEE_CONFIG
+  config: FeeConfig = DEFAULT_FEE_CONFIG,
 ): ExitResult {
   const grossPnl = (exitPrice - entryPrice) * quantity;
   const feesEntry = calculateFees(entryPrice, quantity, "BUY", tradeType, config);
@@ -162,7 +160,7 @@ export function calculateFeeAdjustedTarget(
   quantity: number,
   tradeType: "INTRADAY" | "DELIVERY",
   config: FeeConfig = DEFAULT_FEE_CONFIG,
-  rrRatio: number = 2
+  rrRatio: number = 2,
 ): FeeAdjustedTargetResult {
   if (quantity <= 0 || entryPrice <= 0 || stopLoss <= 0) {
     return { target: entryPrice, netProfit: 0, netLoss: 0 };
@@ -211,7 +209,13 @@ function round2(n: number): number {
 
 function emptyResult(entryPrice: number): PositionResult {
   const zeroFees: FeeBreakdown = {
-    brokerage: 0, stt: 0, exchangeTxn: 0, sebi: 0, stampDuty: 0, gst: 0, total: 0,
+    brokerage: 0,
+    stt: 0,
+    exchangeTxn: 0,
+    sebi: 0,
+    stampDuty: 0,
+    gst: 0,
+    total: 0,
   };
   return {
     quantity: 0,

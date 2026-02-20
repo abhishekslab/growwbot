@@ -4,10 +4,10 @@ In-memory cache for market data with TTL-based expiration.
 Speeds up screener re-runs from ~30s to near-instant on warm cache.
 """
 
+import logging
 import threading
 import time
-import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

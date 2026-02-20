@@ -39,8 +39,7 @@ type PendingAction =
   | { type: "capital"; value: number }
   | { type: "compounding"; enable: boolean };
 
-const fmt = (n: number) =>
-  "\u20B9" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+const fmt = (n: number) => "\u20B9" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
 export default function AlgoCard({
   algo,
@@ -154,16 +153,12 @@ export default function AlgoCard({
                 </span>
               )}
             </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {algo.description}
-            </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{algo.description}</p>
           </div>
           <button
             role="switch"
             aria-checked={algo.enabled}
-            onClick={() =>
-              setPending({ type: "toggle", enable: !algo.enabled })
-            }
+            onClick={() => setPending({ type: "toggle", enable: !algo.enabled })}
             className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
               algo.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
             }`}
@@ -185,17 +180,13 @@ export default function AlgoCard({
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Win Rate
-            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Win Rate</p>
             <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {perf?.win_rate ?? 0}%
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Net P&L
-            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Net P&L</p>
             <p
               className={`text-lg font-semibold ${
                 (perf?.net_pnl ?? 0) >= 0
@@ -221,9 +212,7 @@ export default function AlgoCard({
         <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
           {/* Capital input */}
           <div className="flex items-center justify-between">
-            <label className="text-xs text-gray-500 dark:text-gray-400">
-              Capital
-            </label>
+            <label className="text-xs text-gray-500 dark:text-gray-400">Capital</label>
             <div className="flex items-center gap-1">
               <span className="text-xs text-gray-400">{"\u20B9"}</span>
               <input
@@ -244,9 +233,7 @@ export default function AlgoCard({
           {/* Effective capital (shown when compounding is on) */}
           {algo.compounding && (
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                Effective
-              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Effective</span>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {"\u20B9"}
                 {algo.effective_capital.toLocaleString("en-IN")}
@@ -269,9 +256,7 @@ export default function AlgoCard({
 
           {/* Compounding toggle */}
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              Compounding
-            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Compounding</span>
             <button
               role="switch"
               aria-checked={algo.compounding}
@@ -282,9 +267,7 @@ export default function AlgoCard({
                 })
               }
               className={`relative h-5 w-9 rounded-full transition-colors ${
-                algo.compounding
-                  ? "bg-blue-500"
-                  : "bg-gray-300 dark:bg-gray-600"
+                algo.compounding ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"
               }`}
             >
               <span

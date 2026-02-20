@@ -1,5 +1,7 @@
 # Environment files
-.env
+**/.env
+**/.env.*
+!**/.env.example
 
 # Persisted auth token
 server/.groww_token
@@ -7,6 +9,8 @@ server/.groww_token
 # Python
 __pycache__/
 *.pyc
+*.pyo
+.ruff_cache/
 
 # Node
 node_modules/
@@ -22,3 +26,11 @@ server/daily_picks_snapshot.json
 
 # OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

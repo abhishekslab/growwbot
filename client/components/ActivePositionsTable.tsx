@@ -39,14 +39,30 @@ export default function ActivePositionsTable({ trades, flashSymbols, onSell }: P
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-800">
-            <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Symbol</th>
-            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Entry</th>
-            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">LTP</th>
-            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Qty</th>
-            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Capital</th>
-            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Target</th>
-            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">SL</th>
-            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Unrealized P&L</th>
+            <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
+              Symbol
+            </th>
+            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+              Entry
+            </th>
+            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+              LTP
+            </th>
+            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+              Qty
+            </th>
+            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+              Capital
+            </th>
+            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+              Target
+            </th>
+            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+              SL
+            </th>
+            <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400">
+              Unrealized P&L
+            </th>
             <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400"></th>
           </tr>
         </thead>
@@ -88,7 +104,9 @@ export default function ActivePositionsTable({ trades, flashSymbols, onSell }: P
                     </span>
                   )}
                 </td>
-                <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{t.quantity}</td>
+                <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
+                  {t.quantity}
+                </td>
                 <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
                   {fmt(t.capital_used)}
                 </td>
@@ -112,7 +130,8 @@ export default function ActivePositionsTable({ trades, flashSymbols, onSell }: P
                         : "text-red-600 dark:text-red-400"
                     }`}
                   >
-                    {t.unrealized_pnl >= 0 ? "+" : "-"}{fmt(t.unrealized_pnl)}
+                    {t.unrealized_pnl >= 0 ? "+" : "-"}
+                    {fmt(t.unrealized_pnl)}
                   </span>
                 </td>
                 <td className="px-3 py-2 text-right">

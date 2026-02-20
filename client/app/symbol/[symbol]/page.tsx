@@ -113,12 +113,8 @@ export default function SymbolPage() {
   }, [fetchCandles, fetchQuote, connectWs]);
 
   const currentLtp = liveLtp ?? quote?.ltp ?? 0;
-  const change = quote
-    ? currentLtp - (quote.prev_close || quote.close || 0)
-    : 0;
-  const changePct = quote?.prev_close
-    ? (change / quote.prev_close) * 100
-    : 0;
+  const change = quote ? currentLtp - (quote.prev_close || quote.close || 0) : 0;
+  const changePct = quote?.prev_close ? (change / quote.prev_close) * 100 : 0;
   const isPositive = change >= 0;
   const ltpChanged = prevLtp !== null && liveLtp !== null && prevLtp !== liveLtp;
 
@@ -142,16 +138,10 @@ export default function SymbolPage() {
         <>
           {/* Compact header */}
           <div className="mb-3 flex items-baseline gap-4">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {symbol}
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{symbol}</h1>
             <span
-              className={`text-2xl font-semibold ${
-                ltpChanged ? "animate-pulse" : ""
-              } ${
-                isPositive
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+              className={`text-2xl font-semibold ${ltpChanged ? "animate-pulse" : ""} ${
+                isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
               }`}
             >
               {"\u20B9"}
@@ -162,9 +152,7 @@ export default function SymbolPage() {
             </span>
             <span
               className={`text-sm font-medium ${
-                isPositive
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+                isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
               }`}
             >
               {isPositive ? "+" : ""}
@@ -177,7 +165,10 @@ export default function SymbolPage() {
             {(["1m", "3m", "5m", "15m", "1H", "1D"] as Timeframe[]).map((tf) => (
               <button
                 key={tf}
-                onClick={() => { setTimeframe(tf); setLoading(true); }}
+                onClick={() => {
+                  setTimeframe(tf);
+                  setLoading(true);
+                }}
                 className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
                   timeframe === tf
                     ? "bg-blue-600 text-white"

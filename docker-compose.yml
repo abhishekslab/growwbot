@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./server
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/app
+    env_file:
+      - ./server/.env
+
+  frontend:
+    build: ./client
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend

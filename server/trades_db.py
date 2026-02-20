@@ -5,10 +5,10 @@ Uses Python's built-in sqlite3 — no extra dependencies.
 Database file: server/trades.db (auto-created on first run).
 """
 
-import sqlite3
 import os
+import sqlite3
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import List, Optional
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "trades.db")
 

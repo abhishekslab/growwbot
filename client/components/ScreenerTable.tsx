@@ -83,12 +83,8 @@ export default function ScreenerTable({ results }: { results: ScreenerResult[] }
               key={r.symbol}
               className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
             >
-              <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
-                {r.symbol}
-              </td>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                {r.name}
-              </td>
+              <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{r.symbol}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.name}</td>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                 {formatCurrency(r.ltp)}
               </td>
@@ -102,9 +98,7 @@ export default function ScreenerTable({ results }: { results: ScreenerResult[] }
                 {r.relative_volume.toFixed(1)}x
               </td>
               <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                {r.float_shares != null
-                  ? (r.float_shares / 1_000_000).toFixed(1) + "M"
-                  : "N/A"}
+                {r.float_shares != null ? (r.float_shares / 1_000_000).toFixed(1) + "M" : "N/A"}
               </td>
               <td className="max-w-xs truncate px-4 py-3">
                 {r.news_link ? (

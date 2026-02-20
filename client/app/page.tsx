@@ -63,7 +63,12 @@ export default function DailyPicksPage() {
   const [flashSymbols, setFlashSymbols] = useState<Set<string>>(new Set());
   const [snapshotTime, setSnapshotTime] = useState<string | null>(null);
   const [showTradeableOnly, setShowTradeableOnly] = useState(false);
-  const [analysisMap, setAnalysisMap] = useState<Record<string, { verdict: string; score: number; trend: string; rsi: number; volumeRatio: number }>>({});
+  const [analysisMap, setAnalysisMap] = useState<
+    Record<
+      string,
+      { verdict: string; score: number; trend: string; rsi: number; volumeRatio: number }
+    >
+  >({});
   const [analysisPhase, setAnalysisPhase] = useState<"idle" | "running" | "done">("idle");
 
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -117,17 +122,22 @@ export default function DailyPicksPage() {
     const sorted = [...picks].sort((a, b) => tierPriority(a) - tierPriority(b));
 
     // Analyze all non-"other" tier stocks, plus top 10 "other" tier (max ~40)
-    const nonOther = sorted.filter(c => tierPriority(c) < 3);
-    const otherTop = sorted.filter(c => tierPriority(c) === 3).slice(0, 10);
+    const nonOther = sorted.filter((c) => tierPriority(c) < 3);
+    const otherTop = sorted.filter((c) => tierPriority(c) === 3).slice(0, 10);
     const top = [...nonOther, ...otherTop];
 
-    const results: Record<string, { verdict: string; score: number; trend: string; rsi: number; volumeRatio: number }> = {};
+    const results: Record<
+      string,
+      { verdict: string; score: number; trend: string; rsi: number; volumeRatio: number }
+    > = {};
 
     for (let i = 0; i < top.length; i += 5) {
       const batch = top.slice(i, i + 5);
       const promises = batch.map(async (c) => {
         try {
-          const res = await fetch(`${API_URL}/api/candles/${encodeURIComponent(c.symbol)}?interval=5minute&days=2`);
+          const res = await fetch(
+            `${API_URL}/api/candles/${encodeURIComponent(c.symbol)}?interval=5minute&days=2`,
+          );
           if (!res.ok) return;
           const data = await res.json();
           const candles = data.candles || [];
@@ -141,10 +151,12 @@ export default function DailyPicksPage() {
               volumeRatio: analysis.volumeRatio,
             };
           }
-        } catch { /* skip failed */ }
+        } catch {
+          /* skip failed */
+        }
       });
       await Promise.all(promises);
-      setAnalysisMap(prev => ({ ...prev, ...results }));
+      setAnalysisMap((prev) => ({ ...prev, ...results }));
     }
     setAnalysisPhase("done");
   }, []);
@@ -164,8 +176,7 @@ export default function DailyPicksPage() {
 
         liveRetriesRef.current = 0;
 
-        const updates: Record<string, { ltp: number; day_change_pct: number }> =
-          data.updates;
+        const updates: Record<string, { ltp: number; day_change_pct: number }> = data.updates;
         const timestamp: number = data.timestamp;
 
         setLastLtpTime(timestamp);
@@ -193,7 +204,7 @@ export default function DailyPicksPage() {
               day_change_pct: upd.day_change_pct,
               turnover: newTurnover,
             };
-          })
+          }),
         );
       } catch {
         // Ignore malformed messages
@@ -318,7 +329,7 @@ export default function DailyPicksPage() {
                 hour: "2-digit",
                 minute: "2-digit",
                 second: "2-digit",
-              })
+              }),
             );
           }
           setStage("done");
@@ -329,9 +340,7 @@ export default function DailyPicksPage() {
       }
 
       if (!cancelled) {
-        const ageSeconds = snapshotSavedAt
-          ? (Date.now() / 1000) - snapshotSavedAt
-          : Infinity;
+        const ageSeconds = snapshotSavedAt ? Date.now() / 1000 - snapshotSavedAt : Infinity;
         if (ageSeconds > 300) {
           startScan();
         } else {
@@ -386,7 +395,10 @@ export default function DailyPicksPage() {
       return 3; // AVOID
     };
 
-    const sortWithAnalysis = (arr: DailyPick[], fallbackSort: (a: DailyPick, b: DailyPick) => number) => {
+    const sortWithAnalysis = (
+      arr: DailyPick[],
+      fallbackSort: (a: DailyPick, b: DailyPick) => number,
+    ) => {
       if (!hasAnalysis) {
         arr.sort(fallbackSort);
         return;
@@ -452,9 +464,7 @@ export default function DailyPicksPage() {
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
       <header className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            Daily Picks
-          </h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Daily Picks</h1>
           {phase === "live" && <LiveIndicator lastUpdateTime={lastLtpTime} />}
           {phase === "snapshot" && snapshotTime && (
             <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -481,7 +491,7 @@ export default function DailyPicksPage() {
           )}
           {analysisPhase === "done" && (
             <span className="text-xs text-green-600 dark:text-green-400">
-              {Object.values(analysisMap).filter(a => a.verdict === "BUY").length} BUY signals
+              {Object.values(analysisMap).filter((a) => a.verdict === "BUY").length} BUY signals
             </span>
           )}
         </div>
@@ -503,9 +513,7 @@ export default function DailyPicksPage() {
           {isScanning && hasCandidates && (
             <div className="flex items-center gap-2">
               <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
-              <span className="text-xs text-blue-700 dark:text-blue-300">
-                {progressLabel}
-              </span>
+              <span className="text-xs text-blue-700 dark:text-blue-300">{progressLabel}</span>
               {scanProgress && (
                 <div className="h-1.5 w-20 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
                   <div
@@ -542,17 +550,11 @@ export default function DailyPicksPage() {
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">
-          <h2 className="text-lg font-semibold text-red-800 dark:text-red-200">
-            Scanner Error
-          </h2>
+          <h2 className="text-lg font-semibold text-red-800 dark:text-red-200">Scanner Error</h2>
           <p className="mt-2 text-red-600 dark:text-red-400">{error}</p>
           <p className="mt-4 text-sm text-red-500 dark:text-red-400">
-            Make sure the backend is running at {API_URL} and your API
-            credentials are configured in{" "}
-            <code className="rounded bg-red-100 px-1 dark:bg-red-900">
-              server/.env
-            </code>
-            .
+            Make sure the backend is running at {API_URL} and your API credentials are configured in{" "}
+            <code className="rounded bg-red-100 px-1 dark:bg-red-900">server/.env</code>.
           </p>
         </div>
       )}

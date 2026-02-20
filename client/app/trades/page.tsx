@@ -59,12 +59,14 @@ export default function TradesPage() {
     Promise.all([
       fetch(`${API_URL}/api/trades?${paperParam}`).then((r) => r.json()),
       fetch(`${API_URL}/api/trades/summary?${paperParam}`).then((r) => r.json()),
-    ]).then(([tradeList, sum]) => {
-      // Filter out OPEN trades — only show closed in history
-      setHistoryTrades(tradeList.filter((t: Trade) => t.status !== "OPEN"));
-      setSummary(sum);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    ])
+      .then(([tradeList, sum]) => {
+        // Filter out OPEN trades — only show closed in history
+        setHistoryTrades(tradeList.filter((t: Trade) => t.status !== "OPEN"));
+        setSummary(sum);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [paperMode]);
 
   // Clear stale data when paperMode changes (or on initial load)
@@ -204,7 +206,7 @@ export default function TradesPage() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-4 right-4 z-50 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-lg ${
+          className={`fixed right-4 bottom-4 z-50 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-lg ${
             toast.type === "success" ? "bg-green-600" : "bg-red-600"
           }`}
         >

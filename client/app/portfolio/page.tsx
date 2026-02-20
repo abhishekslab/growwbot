@@ -47,8 +47,7 @@ export default function PortfolioPage() {
         setLoading(false);
       })
       .catch((err) => {
-        const message =
-          err?.detail || err?.message || "Failed to connect to the backend server.";
+        const message = err?.detail || err?.message || "Failed to connect to the backend server.";
         setError(message);
         setLoading(false);
       });
@@ -57,9 +56,7 @@ export default function PortfolioPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          GrowwBot Portfolio
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">GrowwBot Portfolio</h1>
         <p className="mt-1 text-gray-500 dark:text-gray-400">
           Track your stock holdings and performance
         </p>
@@ -79,8 +76,8 @@ export default function PortfolioPage() {
           </h2>
           <p className="mt-2 text-red-600 dark:text-red-400">{error}</p>
           <p className="mt-4 text-sm text-red-500 dark:text-red-400">
-            Make sure the backend is running at {API_URL} and your API credentials are
-            configured in <code className="rounded bg-red-100 px-1 dark:bg-red-900">server/.env</code>.
+            Make sure the backend is running at {API_URL} and your API credentials are configured in{" "}
+            <code className="rounded bg-red-100 px-1 dark:bg-red-900">server/.env</code>.
           </p>
         </div>
       )}

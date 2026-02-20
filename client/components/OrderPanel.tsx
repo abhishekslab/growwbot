@@ -29,10 +29,7 @@ export default function OrderPanel({ symbol, ltp, onSubmit }: Props) {
   const showTrigger = orderType === "SL" || orderType === "SL-M";
   const estimatedValue = quantity * (orderType === "MARKET" ? ltp : price);
 
-  const valid =
-    quantity >= 1 &&
-    (!showPrice || price > 0) &&
-    (!showTrigger || triggerPrice > 0);
+  const valid = quantity >= 1 && (!showPrice || price > 0) && (!showTrigger || triggerPrice > 0);
 
   const handleSubmit = () => {
     if (!valid) return;
@@ -53,9 +50,7 @@ export default function OrderPanel({ symbol, ltp, onSubmit }: Props) {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-        Place Order
-      </h2>
+      <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Place Order</h2>
 
       {/* Buy / Sell toggle */}
       <div className="mb-4 flex gap-2">
@@ -130,7 +125,7 @@ export default function OrderPanel({ symbol, ltp, onSubmit }: Props) {
           min={1}
           value={quantity}
           onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
         />
       </div>
 
@@ -146,7 +141,7 @@ export default function OrderPanel({ symbol, ltp, onSubmit }: Props) {
             min={0}
             value={price}
             onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           />
         </div>
       )}
@@ -163,7 +158,7 @@ export default function OrderPanel({ symbol, ltp, onSubmit }: Props) {
             min={0}
             value={triggerPrice}
             onChange={(e) => setTriggerPrice(parseFloat(e.target.value) || 0)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           />
         </div>
       )}
@@ -185,9 +180,7 @@ export default function OrderPanel({ symbol, ltp, onSubmit }: Props) {
         onClick={handleSubmit}
         disabled={!valid}
         className={`w-full rounded-lg py-2.5 text-sm font-semibold text-white transition disabled:opacity-50 ${
-          txnType === "BUY"
-            ? "bg-green-600 hover:bg-green-700"
-            : "bg-red-600 hover:bg-red-700"
+          txnType === "BUY" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
         }`}
       >
         Review {txnType} Order
