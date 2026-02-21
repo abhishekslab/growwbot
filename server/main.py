@@ -15,6 +15,9 @@ from pydantic import BaseModel
 from algo_engine import AlgoEngine
 from algo_mean_reversion import MeanReversion
 from algo_momentum import MomentumScalping
+from backtest_cache import clear_cache as backtest_clear_cache, get_cache_stats as backtest_cache_stats, get_candles as backtest_get_candles
+from backtest_db import delete_backtest_run, get_backtest_run, list_backtest_runs, save_backtest_run
+from backtest_engine import run_backtest
 from cache import MarketCache
 from position_monitor import PositionMonitor, compute_exit_pnl
 from snapshot import load_snapshot, save_snapshot
@@ -1001,6 +1004,191 @@ def api_algo_performance(is_paper: Optional[bool] = Query(None), by_version: boo
 @app.get("/api/algos/{algo_id}/signals")
 def api_algo_signals(algo_id: str, limit: int = Query(50)):
     return list_algo_signals(algo_id=algo_id, limit=limit)
+
+
+# ------------------------------------------------------------------
+# Backtest endpoints
+# ------------------------------------------------------------------
+
+class BacktestRunRequest(BaseModel):
+    algo_id: str
+    groww_symbol: str
+    exchange: str = "NSE"
+    segment: str = "CASH"
+    start_date: str
+    end_date: str
+    candle_interval: str = "5minute"
+    initial_capital: float = 100000.0
+    risk_percent: float = 1.0
+    max_positions: int = 1
+    config_overrides: Optional[dict] = None
+
+
+def _backtest_event_generator(body: BacktestRunRequest):
+    """Generator that yields SSE events from run_backtest and saves result on complete."""
+    try:
+        groww = get_groww_client()
+    except HTTPException:
+        raise
+    except Exception as e:
+        yield "data: %s\n\n" % json.dumps({"event_type": "complete", "error": str(e)})
+        return
+    algo = algo_engine._algos.get(body.algo_id)
+    if not algo:
+        yield "data: %s\n\n" % json.dumps({"event_type": "complete", "error": "Algo not found: %s" % body.algo_id})
+        return
+    overrides = body.config_overrides or {}
+    try:
+        clone = algo.clone_with_config(overrides)
+    except NotImplementedError as e:
+        yield "data: %s\n\n" % json.dumps({"event_type": "complete", "error": str(e)})
+        return
+    try:
+        for ev in run_backtest(
+            groww,
+            clone,
+            body.groww_symbol,
+            body.exchange,
+            body.segment,
+            body.start_date,
+            body.end_date,
+            body.candle_interval,
+            body.initial_capital,
+            body.risk_percent,
+            body.max_positions,
+        ):
+            if ev.get("event_type") == "complete" and "error" not in ev:
+                run_id = save_backtest_run(
+                    algo_id=body.algo_id,
+                    groww_symbol=body.groww_symbol,
+                    exchange=body.exchange,
+                    segment=body.segment,
+                    interval=body.candle_interval,
+                    start_date=body.start_date,
+                    end_date=body.end_date,
+                    config=overrides,
+                    metrics=ev.get("metrics"),
+                    trades=ev.get("trades"),
+                    equity_curve=ev.get("equity_curve"),
+                )
+                ev["run_id"] = run_id
+            yield "data: %s\n\n" % json.dumps(ev)
+    except Exception as e:
+        logger.exception("Backtest run failed")
+        yield "data: %s\n\n" % json.dumps({
+            "event_type": "complete",
+            "error": "Failed to fetch data: %s" % e,
+            "metrics": {},
+            "trades": [],
+            "equity_curve": [],
+        })
+
+
+@app.post("/api/backtest/run")
+def api_backtest_run(body: BacktestRunRequest):
+    """Run a backtest; streams SSE events (progress, trade, complete)."""
+    return StreamingResponse(
+        _backtest_event_generator(body),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.get("/api/backtest/history")
+def api_backtest_history(limit: int = Query(50)):
+    return list_backtest_runs(limit=limit)
+
+
+@app.get("/api/backtest/{run_id}")
+def api_backtest_get(run_id: int):
+    run = get_backtest_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Backtest run not found")
+    return run
+
+
+@app.delete("/api/backtest/{run_id}")
+def api_backtest_delete(run_id: int):
+    if not delete_backtest_run(run_id):
+        raise HTTPException(status_code=404, detail="Backtest run not found")
+    return {"message": "Deleted"}
+
+
+@app.get("/api/backtest/expiries")
+def api_backtest_expiries(
+    exchange: str = Query("NSE"),
+    underlying_symbol: str = Query(..., alias="underlying"),
+    year: Optional[int] = Query(None),
+    month: Optional[int] = Query(None),
+):
+    """Groww Backtesting API: expiries for FNO. Params: exchange, underlying_symbol (e.g. NIFTY), year (optional), month (optional). Returns { expiries: string[] } in YYYY-MM-DD."""
+    try:
+        groww = get_groww_client()
+    except HTTPException:
+        raise
+    try:
+        kwargs = {"exchange": exchange, "underlying_symbol": underlying_symbol}
+        if year is not None:
+            kwargs["year"] = year
+        if month is not None:
+            kwargs["month"] = month
+        result = groww.get_expiries(**kwargs)
+        return result if isinstance(result, dict) else {"expiries": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/backtest/contracts")
+def api_backtest_contracts(
+    exchange: str = Query("NSE"),
+    underlying_symbol: str = Query(..., alias="underlying"),
+    expiry_date: str = Query(..., alias="expiry_date"),
+):
+    """Groww Backtesting API: contracts for FNO. Params: exchange, underlying_symbol, expiry_date (YYYY-MM-DD). Returns { contracts: string[] } of groww symbols."""
+    try:
+        groww = get_groww_client()
+    except HTTPException:
+        raise
+    try:
+        result = groww.get_contracts(
+            exchange=exchange,
+            underlying_symbol=underlying_symbol,
+            expiry_date=expiry_date,
+        )
+        return result if isinstance(result, dict) else {"contracts": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/backtest/cache/status")
+def api_backtest_cache_status():
+    return backtest_cache_stats()
+
+
+@app.post("/api/backtest/cache/warmup")
+def api_backtest_cache_warmup(
+    groww_symbol: str,
+    segment: str = "CASH",
+    interval: str = "5minute",
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    exchange: str = "NSE",
+):
+    try:
+        groww = get_groww_client()
+    except HTTPException:
+        raise
+    try:
+        backtest_get_candles(groww, groww_symbol, segment, interval, start_date, end_date, exchange)
+        return {"message": "Warmup complete", "symbol": groww_symbol, "start_date": start_date, "end_date": end_date}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/backtest/cache/clear")
+def api_backtest_cache_clear(groww_symbol: Optional[str] = Query(None)):
+    deleted = backtest_clear_cache(groww_symbol)
+    return {"message": "Cache cleared", "deleted_entries": deleted}
 
 
 # ------------------------------------------------------------------
