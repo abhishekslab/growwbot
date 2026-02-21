@@ -112,3 +112,10 @@ class BaseAlgorithm:
         # Also cap by capital available
         max_qty_by_capital = int(capital / entry_price) if entry_price > 0 else 0
         return min(qty, max_qty_by_capital)
+
+    def clone_with_config(self, overrides):
+        # type: (dict) -> BaseAlgorithm
+        """Create a fresh instance with merged config (for backtesting). Override in subclasses."""
+        raise NotImplementedError(
+            "%s must implement clone_with_config(overrides)" % type(self).__name__
+        )
