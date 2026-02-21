@@ -57,8 +57,11 @@ function WinRateTable<T extends AnalyticsRow>({
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} className="border-b border-gray-100 dark:border-gray-700/50">
+            {rows.map((r) => (
+              <tr
+                key={String(r[labelKey])}
+                className="border-b border-gray-100 dark:border-gray-700/50"
+              >
                 <td className="px-3 py-1.5 font-medium text-gray-900 dark:text-gray-100">
                   {String(r[labelKey] as unknown)}
                 </td>
@@ -131,7 +134,7 @@ export default function TradeAnalyticsDashboard({ paperMode }: { paperMode: bool
     fetch(`${API_URL}/api/trades/analytics?is_paper=${paperMode}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        setData(d);
+        setData(d?.analytics || d);
         setLoading(false);
       })
       .catch(() => setLoading(false));
