@@ -1,0 +1,693 @@
+2026-02-21 18:06:24,372 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 18:06:24,372 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 18:06:24,377 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 18:06:24,378 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 18:06:24,378 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 18:06:24,378 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 18:06:24,378 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 18:06:24,378 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 18:06:24,378 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 18:06:24,378 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 18:06:24,378 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 18:06:24,379 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 18:06:24,379 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 18:06:24,379 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 18:06:24,379 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 18:06:24,379 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 18:06:24,379 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 18:06:24,379 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 18:08:03,656 | INFO     | root | main.py:133 | logging_middleware | [16d8c3c8] → Request POST /api/backtest/run
+2026-02-21 18:08:03,661 | INFO     | infrastructure | groww_client.py:120 | __init__ | GrowwClient initialized
+2026-02-21 18:08:03,661 | INFO     | infrastructure | groww_client.py:254 | get_groww_client | Created new GrowwClient instance
+2026-02-21 18:08:03,662 | INFO     | root | main.py:156 | logging_middleware | [16d8c3c8] ← Response POST /api/backtest/run 200 in 6.89ms
+2026-02-21 18:08:03,664 | WARNING  | strategies.registry | registry.py:32 | get | Strategy not found: mean_reversion
+2026-02-21 18:08:15,002 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 18:08:15,003 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 18:08:15,003 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 18:08:15,003 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 18:08:24,384 | INFO     | services.algo_engine | algo_engine.py:274 | _loop | AlgoEngine loop exiting
+2026-02-21 18:08:24,384 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 18:08:24,384 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 18:08:24,384 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 18:08:24,505 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 18:08:24,506 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 18:08:24,506 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 18:08:24,748 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 18:08:24,748 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 18:08:24,753 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 18:08:24,754 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 18:08:24,754 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 18:08:24,754 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 18:08:24,754 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 18:08:24,754 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 18:08:24,754 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 18:08:24,754 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 18:08:24,754 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 18:08:24,754 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 18:08:24,754 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 18:08:24,754 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 18:08:24,754 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 18:08:24,755 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 18:08:24,755 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 18:08:24,755 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 18:08:24,757 | INFO     | root | main.py:133 | logging_middleware | [98ac0610] → Request POST /api/backtest/run
+2026-02-21 18:08:24,758 | INFO     | infrastructure | groww_client.py:120 | __init__ | GrowwClient initialized
+2026-02-21 18:08:24,758 | INFO     | infrastructure | groww_client.py:254 | get_groww_client | Created new GrowwClient instance
+2026-02-21 18:08:24,758 | INFO     | root | main.py:156 | logging_middleware | [98ac0610] ← Response POST /api/backtest/run 200 in 1.71ms
+2026-02-21 18:08:24,759 | INFO     | strategies.registry | registry.py:25 | register | Registered strategy: momentum_scalp -> MomentumScalping
+2026-02-21 18:08:24,759 | INFO     | strategies.registry | registry.py:25 | register | Registered strategy: mean_reversion -> MeanReversion
+2026-02-21 18:08:24,759 | INFO     | strategies.registry | registry.py:59 | initialize | Initialized StrategyRegistry with 2 strategies
+2026-02-21 18:08:25,225 | INFO     | infrastructure | groww_client.py:77 | _create_groww_client | Loaded persisted token from disk (age 4592s)
+2026-02-21 18:08:25,403 | WARNING  | backtest_cache | backtest_cache.py:256 | get_candles | Backtest cache: fetch failed NSE-TATAELXSI 5minute 2026-02-16 09:15:00-2026-02-20 15:30:00: GrowwAPI.get_historical_candles() got an unexpected keyword argument 'symbol'
+2026-02-21 18:09:57,998 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 18:09:58,000 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 18:09:58,000 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 18:09:58,000 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 18:10:13,005 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 18:10:13,005 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 18:10:13,005 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 18:10:14,869 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 18:10:14,869 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 18:10:14,869 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 18:10:15,103 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 18:10:15,103 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 18:10:15,108 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 18:10:15,108 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 18:10:15,109 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 18:10:15,109 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 18:10:15,109 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 18:10:15,109 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 18:10:15,109 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 18:10:15,109 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 18:10:15,109 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 18:10:15,109 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 18:10:15,109 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 18:10:15,109 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 18:10:15,109 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 18:10:15,109 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 18:10:15,110 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 18:10:15,110 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 18:10:15,112 | INFO     | root | main.py:133 | logging_middleware | [f21fada4] → Request POST /api/backtest/run
+2026-02-21 18:10:15,114 | INFO     | infrastructure | groww_client.py:120 | __init__ | GrowwClient initialized
+2026-02-21 18:10:15,114 | INFO     | infrastructure | groww_client.py:262 | get_groww_client | Created new GrowwClient instance
+2026-02-21 18:10:15,114 | INFO     | root | main.py:156 | logging_middleware | [f21fada4] ← Response POST /api/backtest/run 200 in 2.25ms
+2026-02-21 18:10:15,115 | INFO     | strategies.registry | registry.py:25 | register | Registered strategy: momentum_scalp -> MomentumScalping
+2026-02-21 18:10:15,115 | INFO     | strategies.registry | registry.py:25 | register | Registered strategy: mean_reversion -> MeanReversion
+2026-02-21 18:10:15,115 | INFO     | strategies.registry | registry.py:59 | initialize | Initialized StrategyRegistry with 2 strategies
+2026-02-21 18:10:15,356 | INFO     | infrastructure | groww_client.py:77 | _create_groww_client | Loaded persisted token from disk (age 4702s)
+2026-02-21 18:10:15,867 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-TATAELXSI 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:10:15,867 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-TATAELXSI 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:10:30,826 | INFO     | root | main.py:133 | logging_middleware | [a4585909] → Request POST /api/backtest/run
+2026-02-21 18:10:30,827 | INFO     | root | main.py:156 | logging_middleware | [a4585909] ← Response POST /api/backtest/run 200 in 0.96ms
+2026-02-21 18:10:31,050 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-RELIANCE 5minute (2025-02-10 09:15:00 to 2025-02-14 15:30:00)
+2026-02-21 18:10:31,050 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-RELIANCE 5minute (2025-02-10 09:15:00–2025-02-14 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:10:39,066 | INFO     | root | main.py:133 | logging_middleware | [ba891171] → Request POST /api/backtest/run
+2026-02-21 18:10:39,068 | INFO     | root | main.py:156 | logging_middleware | [ba891171] ← Response POST /api/backtest/run 200 in 1.92ms
+2026-02-21 18:10:39,326 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 404 candles for RELIANCE 5minute (2025-02-10 09:15:00 to 2025-02-14 15:30:00)
+2026-02-21 18:10:39,348 | INFO     | backtest_engine | backtest_engine.py:368 | run_backtest | Saved backtest run 11 for RELIANCE
+2026-02-21 18:10:48,658 | INFO     | root | main.py:133 | logging_middleware | [752a671c] → Request GET /api/backtest/history
+2026-02-21 18:10:48,661 | INFO     | root | main.py:156 | logging_middleware | [752a671c] ← Response GET /api/backtest/history 200 in 2.85ms
+2026-02-21 18:14:34,702 | INFO     | root | main.py:133 | logging_middleware | [998b12af] → Request GET /api/algos
+2026-02-21 18:14:34,703 | INFO     | root | main.py:133 | logging_middleware | [28cf079c] → Request GET /api/backtest/history
+2026-02-21 18:14:34,708 | INFO     | root | main.py:156 | logging_middleware | [998b12af] ← Response GET /api/algos 307 in 5.35ms
+2026-02-21 18:14:34,715 | INFO     | root | main.py:156 | logging_middleware | [28cf079c] ← Response GET /api/backtest/history 200 in 11.57ms
+2026-02-21 18:14:34,717 | INFO     | root | main.py:133 | logging_middleware | [6ed82c17] → Request GET /api/algos/
+2026-02-21 18:14:34,720 | INFO     | api.algos | algos.py:29 | list_algos | [070ca989] Listing algorithms
+2026-02-21 18:14:34,727 | INFO     | api.algos | algos.py:44 | list_algos | [070ca989] Found 2 algorithms in 6.72ms
+2026-02-21 18:14:34,727 | INFO     | root | main.py:156 | logging_middleware | [6ed82c17] ← Response GET /api/algos/ 200 in 9.82ms
+2026-02-21 18:14:47,053 | INFO     | root | main.py:133 | logging_middleware | [c99ce699] → Request OPTIONS /api/backtest/run
+2026-02-21 18:14:47,054 | INFO     | root | main.py:156 | logging_middleware | [c99ce699] ← Response OPTIONS /api/backtest/run 200 in 0.62ms
+2026-02-21 18:14:47,055 | INFO     | root | main.py:133 | logging_middleware | [8a3ee6de] → Request POST /api/backtest/run
+2026-02-21 18:14:47,057 | INFO     | root | main.py:156 | logging_middleware | [8a3ee6de] ← Response POST /api/backtest/run 200 in 2.05ms
+2026-02-21 18:14:47,293 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-TATAELXSI 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:14:47,293 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-TATAELXSI 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:15:03,664 | INFO     | root | main.py:133 | logging_middleware | [d6a73347] → Request POST /api/backtest/run
+2026-02-21 18:15:03,665 | INFO     | root | main.py:156 | logging_middleware | [d6a73347] ← Response POST /api/backtest/run 200 in 0.83ms
+2026-02-21 18:15:03,697 | INFO     | backtest_engine | backtest_engine.py:368 | run_backtest | Saved backtest run 12 for NSE-WIPRO
+2026-02-21 18:15:03,706 | INFO     | root | main.py:133 | logging_middleware | [27a7b1ad] → Request GET /api/backtest/history
+2026-02-21 18:15:03,708 | INFO     | root | main.py:156 | logging_middleware | [27a7b1ad] ← Response GET /api/backtest/history 200 in 1.71ms
+2026-02-21 18:19:58,197 | INFO     | root | main.py:133 | logging_middleware | [1385ba89] → Request POST /api/backtest/run
+2026-02-21 18:19:58,199 | INFO     | root | main.py:156 | logging_middleware | [1385ba89] ← Response POST /api/backtest/run 200 in 2.06ms
+2026-02-21 18:19:58,445 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-NIFTY50 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:19:58,445 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-NIFTY50 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:21:32,312 | INFO     | root | main.py:133 | logging_middleware | [5eace355] → Request POST /api/backtest/run
+2026-02-21 18:21:32,315 | INFO     | root | main.py:156 | logging_middleware | [5eace355] ← Response POST /api/backtest/run 200 in 2.78ms
+2026-02-21 18:21:32,619 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-SETFNIF50 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:21:32,619 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-SETFNIF50 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:22:11,370 | INFO     | root | main.py:133 | logging_middleware | [a74b34ea] → Request POST /api/backtest/run
+2026-02-21 18:22:11,373 | INFO     | root | main.py:156 | logging_middleware | [a74b34ea] ← Response POST /api/backtest/run 200 in 2.57ms
+2026-02-21 18:22:11,532 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-SETFNIFTY 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:22:11,532 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-SETFNIFTY 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:22:28,994 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 18:22:28,997 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 18:22:28,997 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 18:22:28,997 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 18:22:44,002 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 18:22:44,005 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 18:22:44,005 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 18:22:45,951 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 18:22:45,951 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 18:22:45,952 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 18:54:24,085 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 18:54:24,085 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 18:54:24,102 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 18:54:24,102 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 18:54:24,102 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 18:54:24,102 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 18:54:24,102 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 18:54:24,102 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 18:54:24,103 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 18:54:24,103 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 18:54:24,103 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 18:54:24,103 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 18:54:24,103 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 18:54:24,103 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 18:54:24,103 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 18:54:24,103 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 18:54:24,103 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 18:54:24,103 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 18:54:31,398 | INFO     | root | main.py:133 | logging_middleware | [87ee330b] → Request GET /api/algos
+2026-02-21 18:54:31,398 | INFO     | root | main.py:133 | logging_middleware | [5d99f5e2] → Request POST /api/cache/warmup
+2026-02-21 18:54:31,398 | INFO     | root | main.py:133 | logging_middleware | [d83cbe3d] → Request GET /api/backtest/history
+2026-02-21 18:54:31,412 | INFO     | root | main.py:156 | logging_middleware | [87ee330b] ← Response GET /api/algos 307 in 14.23ms
+2026-02-21 18:54:31,413 | INFO     | root | main.py:156 | logging_middleware | [d83cbe3d] ← Response GET /api/backtest/history 200 in 15.00ms
+2026-02-21 18:54:31,414 | INFO     | infrastructure | groww_client.py:120 | __init__ | GrowwClient initialized
+2026-02-21 18:54:31,414 | INFO     | infrastructure | groww_client.py:262 | get_groww_client | Created new GrowwClient instance
+2026-02-21 18:54:31,414 | INFO     | root | main.py:133 | logging_middleware | [f9aa4617] → Request GET /api/algos/
+2026-02-21 18:54:31,416 | INFO     | root | main.py:156 | logging_middleware | [5d99f5e2] ← Response POST /api/cache/warmup 200 in 18.21ms
+2026-02-21 18:54:31,417 | INFO     | api.algos | algos.py:29 | list_algos | [26c30a1a] Listing algorithms
+2026-02-21 18:54:31,423 | INFO     | api.algos | algos.py:44 | list_algos | [26c30a1a] Found 2 algorithms in 6.07ms
+2026-02-21 18:54:31,427 | INFO     | root | main.py:156 | logging_middleware | [f9aa4617] ← Response GET /api/algos/ 200 in 12.23ms
+2026-02-21 18:54:31,445 | INFO     | cache | cache.py:119 | warmup | Cache warmup started
+2026-02-21 18:54:31,679 | INFO     | infrastructure | groww_client.py:77 | _create_groww_client | Loaded persisted token from disk (age 7358s)
+2026-02-21 18:54:34,860 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 0 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:34,963 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 50 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,064 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 100 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,165 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 150 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,270 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 200 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,375 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 250 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,480 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 300 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,585 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 350 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,690 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 400 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,795 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 450 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:35,901 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 500 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,006 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 550 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,111 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 600 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,216 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 650 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,321 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 700 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,426 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 750 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,531 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 800 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,636 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 850 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,741 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 900 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,846 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 950 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:36,952 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1000 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,055 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1050 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,157 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1100 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,262 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1150 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,367 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1200 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,470 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1250 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,575 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1300 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,680 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1350 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,785 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1400 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,887 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1450 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:37,992 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1500 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,095 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1550 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,196 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1600 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,298 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1650 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,403 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1700 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,508 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1750 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,609 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1800 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,715 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1850 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,820 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1900 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:38,925 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 1950 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,025 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2000 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,130 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2050 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,235 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2100 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,341 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2150 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,446 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2200 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,551 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2250 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,656 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2300 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,761 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2350 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,821 | INFO     | root | main.py:133 | logging_middleware | [b2e64a0d] → Request GET /api/instruments/search
+2026-02-21 18:54:39,825 | INFO     | api.symbols | symbols.py:155 | search_instruments | [f1c23d41] Searching instruments: q='NS', segment=CASH, exchange=NSE
+2026-02-21 18:54:39,838 | INFO     | api.symbols | symbols.py:202 | search_instruments | [f1c23d41] Found 20 instruments in 12.66ms
+2026-02-21 18:54:39,839 | INFO     | root | main.py:156 | logging_middleware | [b2e64a0d] ← Response GET /api/instruments/search 200 in 17.11ms
+2026-02-21 18:54:39,863 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2400 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:39,968 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2450 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,073 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2500 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,179 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2550 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,284 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2600 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,389 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2650 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,494 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2700 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,599 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2750 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,634 | INFO     | root | main.py:133 | logging_middleware | [aae403b3] → Request GET /api/instruments/search
+2026-02-21 18:54:40,634 | INFO     | api.symbols | symbols.py:155 | search_instruments | [0953ace8] Searching instruments: q='NSE', segment=CASH, exchange=NSE
+2026-02-21 18:54:40,647 | INFO     | api.symbols | symbols.py:202 | search_instruments | [0953ace8] Found 20 instruments in 13.17ms
+2026-02-21 18:54:40,648 | INFO     | root | main.py:156 | logging_middleware | [aae403b3] ← Response GET /api/instruments/search 200 in 13.93ms
+2026-02-21 18:54:40,702 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2800 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,803 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2850 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:40,905 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2900 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,010 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 2950 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,112 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3000 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,218 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3050 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,320 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3100 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,425 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3150 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,530 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3200 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,631 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3250 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,735 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3300 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,840 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3350 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:41,881 | INFO     | root | main.py:133 | logging_middleware | [e3f47036] → Request GET /api/instruments/search
+2026-02-21 18:54:41,882 | INFO     | api.symbols | symbols.py:155 | search_instruments | [8371df15] Searching instruments: q='NSE-', segment=CASH, exchange=NSE
+2026-02-21 18:54:41,901 | INFO     | api.symbols | symbols.py:202 | search_instruments | [8371df15] Found 20 instruments in 19.64ms
+2026-02-21 18:54:41,902 | INFO     | root | main.py:156 | logging_middleware | [e3f47036] ← Response GET /api/instruments/search 200 in 21.27ms
+2026-02-21 18:54:41,945 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3400 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:42,050 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3450 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:42,155 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3500 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:42,260 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3550 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:42,365 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3600 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:42,470 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3650 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:42,575 | WARNING  | cache | cache.py:138 | warmup | Warmup OHLC batch 3700 failed: GrowwClient.get_ohlc() got an unexpected keyword argument 'exchange_trading_symbols'
+2026-02-21 18:54:42,680 | INFO     | cache | cache.py:143 | warmup | Cache warmup complete
+2026-02-21 18:54:48,211 | INFO     | root | main.py:133 | logging_middleware | [72bf4756] → Request GET /api/instruments/search
+2026-02-21 18:54:48,211 | INFO     | api.symbols | symbols.py:155 | search_instruments | [15623e1c] Searching instruments: q='NSE-re', segment=CASH, exchange=NSE
+2026-02-21 18:54:48,224 | INFO     | api.symbols | symbols.py:202 | search_instruments | [15623e1c] Found 20 instruments in 12.88ms
+2026-02-21 18:54:48,226 | INFO     | root | main.py:156 | logging_middleware | [72bf4756] ← Response GET /api/instruments/search 200 in 14.86ms
+2026-02-21 18:54:49,447 | INFO     | root | main.py:133 | logging_middleware | [481d2aad] → Request GET /api/instruments/search
+2026-02-21 18:54:49,449 | INFO     | api.symbols | symbols.py:155 | search_instruments | [a90803ec] Searching instruments: q='NSE-rel', segment=CASH, exchange=NSE
+2026-02-21 18:54:49,462 | INFO     | api.symbols | symbols.py:202 | search_instruments | [a90803ec] Found 7 instruments in 12.97ms
+2026-02-21 18:54:49,462 | INFO     | root | main.py:156 | logging_middleware | [481d2aad] ← Response GET /api/instruments/search 200 in 15.57ms
+2026-02-21 18:54:50,360 | INFO     | root | main.py:133 | logging_middleware | [a94b1504] → Request GET /api/instruments/search
+2026-02-21 18:54:50,361 | INFO     | api.symbols | symbols.py:155 | search_instruments | [eae7f46c] Searching instruments: q='NSE-rela', segment=CASH, exchange=NSE
+2026-02-21 18:54:50,379 | INFO     | api.symbols | symbols.py:202 | search_instruments | [eae7f46c] Found 1 instruments in 18.09ms
+2026-02-21 18:54:50,379 | INFO     | root | main.py:156 | logging_middleware | [a94b1504] ← Response GET /api/instruments/search 200 in 18.92ms
+2026-02-21 18:54:51,143 | INFO     | root | main.py:133 | logging_middleware | [a09d6a5b] → Request GET /api/instruments/search
+2026-02-21 18:54:51,143 | INFO     | api.symbols | symbols.py:155 | search_instruments | [4f7334cd] Searching instruments: q='NSE-rel', segment=CASH, exchange=NSE
+2026-02-21 18:54:51,158 | INFO     | api.symbols | symbols.py:202 | search_instruments | [4f7334cd] Found 7 instruments in 15.19ms
+2026-02-21 18:54:51,159 | INFO     | root | main.py:156 | logging_middleware | [a09d6a5b] ← Response GET /api/instruments/search 200 in 16.05ms
+2026-02-21 18:54:52,673 | INFO     | root | main.py:133 | logging_middleware | [a35eb994] → Request GET /api/instruments/search
+2026-02-21 18:54:52,674 | INFO     | api.symbols | symbols.py:155 | search_instruments | [8713cfb8] Searching instruments: q='NSE-re', segment=CASH, exchange=NSE
+2026-02-21 18:54:52,699 | INFO     | api.symbols | symbols.py:202 | search_instruments | [8713cfb8] Found 20 instruments in 25.19ms
+2026-02-21 18:54:52,699 | INFO     | root | main.py:156 | logging_middleware | [a35eb994] ← Response GET /api/instruments/search 200 in 26.76ms
+2026-02-21 18:54:53,184 | INFO     | root | main.py:133 | logging_middleware | [a26a9239] → Request GET /api/instruments/search
+2026-02-21 18:54:53,184 | INFO     | api.symbols | symbols.py:155 | search_instruments | [a93996c0] Searching instruments: q='NSE-r', segment=CASH, exchange=NSE
+2026-02-21 18:54:53,195 | INFO     | api.symbols | symbols.py:202 | search_instruments | [a93996c0] Found 20 instruments in 11.42ms
+2026-02-21 18:54:53,196 | INFO     | root | main.py:156 | logging_middleware | [a26a9239] ← Response GET /api/instruments/search 200 in 12.06ms
+2026-02-21 18:54:53,632 | INFO     | root | main.py:133 | logging_middleware | [79b3d29c] → Request GET /api/instruments/search
+2026-02-21 18:54:53,632 | INFO     | api.symbols | symbols.py:155 | search_instruments | [a4c43c22] Searching instruments: q='NSE-', segment=CASH, exchange=NSE
+2026-02-21 18:54:53,663 | INFO     | api.symbols | symbols.py:202 | search_instruments | [a4c43c22] Found 20 instruments in 30.61ms
+2026-02-21 18:54:53,664 | INFO     | root | main.py:156 | logging_middleware | [79b3d29c] ← Response GET /api/instruments/search 200 in 31.41ms
+2026-02-21 18:54:54,529 | INFO     | root | main.py:133 | logging_middleware | [b444e39e] → Request GET /api/instruments/search
+2026-02-21 18:54:54,529 | INFO     | api.symbols | symbols.py:155 | search_instruments | [870f6d19] Searching instruments: q='NSE-mif', segment=CASH, exchange=NSE
+2026-02-21 18:54:54,552 | INFO     | api.symbols | symbols.py:202 | search_instruments | [870f6d19] Found 0 instruments in 22.31ms
+2026-02-21 18:54:54,552 | INFO     | root | main.py:156 | logging_middleware | [b444e39e] ← Response GET /api/instruments/search 200 in 23.27ms
+2026-02-21 18:54:56,341 | INFO     | root | main.py:133 | logging_middleware | [6c5d8a87] → Request GET /api/instruments/search
+2026-02-21 18:54:56,341 | INFO     | api.symbols | symbols.py:155 | search_instruments | [3722a93f] Searching instruments: q='NSE-', segment=CASH, exchange=NSE
+2026-02-21 18:54:56,362 | INFO     | api.symbols | symbols.py:202 | search_instruments | [3722a93f] Found 20 instruments in 20.56ms
+2026-02-21 18:54:56,363 | INFO     | root | main.py:156 | logging_middleware | [6c5d8a87] ← Response GET /api/instruments/search 200 in 21.80ms
+2026-02-21 18:54:57,623 | INFO     | root | main.py:133 | logging_middleware | [5f703551] → Request GET /api/instruments/search
+2026-02-21 18:54:57,624 | INFO     | api.symbols | symbols.py:155 | search_instruments | [10cb2a40] Searching instruments: q='NSE-nifty', segment=CASH, exchange=NSE
+2026-02-21 18:54:57,646 | INFO     | api.symbols | symbols.py:202 | search_instruments | [10cb2a40] Found 10 instruments in 22.30ms
+2026-02-21 18:54:57,646 | INFO     | root | main.py:156 | logging_middleware | [5f703551] ← Response GET /api/instruments/search 200 in 23.31ms
+2026-02-21 18:55:12,670 | INFO     | root | main.py:133 | logging_middleware | [7a8fe5e0] → Request GET /api/instruments/search
+2026-02-21 18:55:12,672 | INFO     | api.symbols | symbols.py:155 | search_instruments | [ee6c49f0] Searching instruments: q='NIFTYBETF', segment=CASH, exchange=NSE
+2026-02-21 18:55:12,685 | INFO     | api.symbols | symbols.py:202 | search_instruments | [ee6c49f0] Found 1 instruments in 12.99ms
+2026-02-21 18:55:12,685 | INFO     | root | main.py:156 | logging_middleware | [7a8fe5e0] ← Response GET /api/instruments/search 200 in 15.37ms
+2026-02-21 18:55:24,788 | INFO     | root | main.py:133 | logging_middleware | [fb57bc08] → Request OPTIONS /api/backtest/run
+2026-02-21 18:55:24,788 | INFO     | root | main.py:156 | logging_middleware | [fb57bc08] ← Response OPTIONS /api/backtest/run 200 in 0.45ms
+2026-02-21 18:55:24,790 | INFO     | root | main.py:133 | logging_middleware | [15267390] → Request POST /api/backtest/run
+2026-02-21 18:55:24,792 | INFO     | root | main.py:156 | logging_middleware | [15267390] ← Response POST /api/backtest/run 200 in 2.19ms
+2026-02-21 18:55:24,792 | INFO     | strategies.registry | registry.py:25 | register | Registered strategy: momentum_scalp -> MomentumScalping
+2026-02-21 18:55:24,792 | INFO     | strategies.registry | registry.py:25 | register | Registered strategy: mean_reversion -> MeanReversion
+2026-02-21 18:55:24,792 | INFO     | strategies.registry | registry.py:59 | initialize | Initialized StrategyRegistry with 2 strategies
+2026-02-21 18:55:24,902 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-NIFTYBETF 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:55:24,902 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-NIFTYBETF 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:55:34,066 | INFO     | root | main.py:133 | logging_middleware | [99aa848d] → Request GET /api/instruments/search
+2026-02-21 18:55:34,067 | INFO     | api.symbols | symbols.py:155 | search_instruments | [f71efaeb] Searching instruments: q='NSNIFTYBETF', segment=CASH, exchange=NSE
+2026-02-21 18:55:34,080 | INFO     | api.symbols | symbols.py:202 | search_instruments | [f71efaeb] Found 0 instruments in 13.51ms
+2026-02-21 18:55:34,083 | INFO     | root | main.py:156 | logging_middleware | [99aa848d] ← Response GET /api/instruments/search 200 in 16.86ms
+2026-02-21 18:55:34,373 | INFO     | root | main.py:133 | logging_middleware | [68e0092d] → Request GET /api/instruments/search
+2026-02-21 18:55:34,374 | INFO     | api.symbols | symbols.py:155 | search_instruments | [4b5a036a] Searching instruments: q='NSENIFTYBETF', segment=CASH, exchange=NSE
+2026-02-21 18:55:34,384 | INFO     | api.symbols | symbols.py:202 | search_instruments | [4b5a036a] Found 0 instruments in 9.78ms
+2026-02-21 18:55:34,384 | INFO     | root | main.py:156 | logging_middleware | [68e0092d] ← Response GET /api/instruments/search 200 in 10.26ms
+2026-02-21 18:55:34,700 | INFO     | root | main.py:133 | logging_middleware | [0886514a] → Request GET /api/instruments/search
+2026-02-21 18:55:34,700 | INFO     | api.symbols | symbols.py:155 | search_instruments | [d9f3c250] Searching instruments: q='NSE-NIFTYBETF', segment=CASH, exchange=NSE
+2026-02-21 18:55:34,712 | INFO     | api.symbols | symbols.py:202 | search_instruments | [d9f3c250] Found 1 instruments in 12.03ms
+2026-02-21 18:55:34,714 | INFO     | root | main.py:156 | logging_middleware | [0886514a] ← Response GET /api/instruments/search 200 in 14.55ms
+2026-02-21 18:55:36,233 | INFO     | root | main.py:133 | logging_middleware | [e9e3fc16] → Request POST /api/backtest/run
+2026-02-21 18:55:36,233 | INFO     | root | main.py:156 | logging_middleware | [e9e3fc16] ← Response POST /api/backtest/run 200 in 0.58ms
+2026-02-21 18:55:36,343 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-NIFTYBETF 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:55:36,343 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-NIFTYBETF 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:56:38,510 | INFO     | root | main.py:133 | logging_middleware | [b14b554a] → Request GET /api/instruments/search
+2026-02-21 18:56:38,512 | INFO     | api.symbols | symbols.py:155 | search_instruments | [cd2d9ce6] Searching instruments: q='NSE-REL', segment=CASH, exchange=NSE
+2026-02-21 18:56:38,529 | INFO     | api.symbols | symbols.py:202 | search_instruments | [cd2d9ce6] Found 7 instruments in 16.64ms
+2026-02-21 18:56:38,529 | INFO     | root | main.py:156 | logging_middleware | [b14b554a] ← Response GET /api/instruments/search 200 in 19.25ms
+2026-02-21 18:56:41,675 | INFO     | root | main.py:133 | logging_middleware | [0b4e5f98] → Request GET /api/instruments/search
+2026-02-21 18:56:41,676 | INFO     | api.symbols | symbols.py:155 | search_instruments | [a28a91d4] Searching instruments: q='RELINFRA', segment=CASH, exchange=NSE
+2026-02-21 18:56:41,698 | INFO     | api.symbols | symbols.py:202 | search_instruments | [a28a91d4] Found 1 instruments in 22.67ms
+2026-02-21 18:56:41,699 | INFO     | root | main.py:156 | logging_middleware | [0b4e5f98] ← Response GET /api/instruments/search 200 in 23.93ms
+2026-02-21 18:56:54,094 | INFO     | root | main.py:133 | logging_middleware | [eef5d61d] → Request GET /api/instruments/search
+2026-02-21 18:56:54,096 | INFO     | api.symbols | symbols.py:155 | search_instruments | [c8dbff7f] Searching instruments: q='NSE-RELINFRA', segment=CASH, exchange=NSE
+2026-02-21 18:56:54,107 | INFO     | api.symbols | symbols.py:202 | search_instruments | [c8dbff7f] Found 1 instruments in 10.44ms
+2026-02-21 18:56:54,107 | INFO     | root | main.py:156 | logging_middleware | [eef5d61d] ← Response GET /api/instruments/search 200 in 12.78ms
+2026-02-21 18:56:57,599 | INFO     | root | main.py:133 | logging_middleware | [6b2f62a2] → Request POST /api/backtest/run
+2026-02-21 18:56:57,600 | INFO     | root | main.py:156 | logging_middleware | [6b2f62a2] ← Response POST /api/backtest/run 200 in 0.88ms
+2026-02-21 18:56:57,829 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:56:57,829 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:57:01,526 | INFO     | root | main.py:133 | logging_middleware | [21202c2b] → Request POST /api/backtest/run
+2026-02-21 18:57:01,528 | INFO     | root | main.py:156 | logging_middleware | [21202c2b] ← Response POST /api/backtest/run 200 in 1.14ms
+2026-02-21 18:57:01,668 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:57:01,668 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:58:30,176 | INFO     | root | main.py:133 | logging_middleware | [e54f201c] → Request GET /api/instruments/search
+2026-02-21 18:58:30,179 | INFO     | api.symbols | symbols.py:155 | search_instruments | [81170b01] Searching instruments: q='NSE-', segment=CASH, exchange=NSE
+2026-02-21 18:58:30,194 | INFO     | api.symbols | symbols.py:202 | search_instruments | [81170b01] Found 20 instruments in 15.27ms
+2026-02-21 18:58:30,198 | INFO     | root | main.py:156 | logging_middleware | [e54f201c] ← Response GET /api/instruments/search 200 in 21.94ms
+2026-02-21 18:58:31,593 | INFO     | root | main.py:133 | logging_middleware | [d1ddcde9] → Request GET /api/instruments/search
+2026-02-21 18:58:31,594 | INFO     | api.symbols | symbols.py:155 | search_instruments | [7610209e] Searching instruments: q='NSE-WIPRO', segment=CASH, exchange=NSE
+2026-02-21 18:58:31,620 | INFO     | api.symbols | symbols.py:202 | search_instruments | [7610209e] Found 1 instruments in 25.89ms
+2026-02-21 18:58:31,620 | INFO     | root | main.py:156 | logging_middleware | [d1ddcde9] ← Response GET /api/instruments/search 200 in 27.35ms
+2026-02-21 18:58:35,043 | INFO     | root | main.py:133 | logging_middleware | [c381c779] → Request POST /api/backtest/run
+2026-02-21 18:58:35,044 | INFO     | root | main.py:156 | logging_middleware | [c381c779] ← Response POST /api/backtest/run 200 in 1.36ms
+2026-02-21 18:58:35,421 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:58:35,422 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:58:43,570 | INFO     | root | main.py:133 | logging_middleware | [847e094f] → Request POST /api/backtest/run
+2026-02-21 18:58:43,572 | INFO     | root | main.py:156 | logging_middleware | [847e094f] ← Response POST /api/backtest/run 200 in 2.63ms
+2026-02-21 18:58:43,856 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:58:43,857 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:58:51,503 | INFO     | root | main.py:133 | logging_middleware | [a717f6f5] → Request POST /api/backtest/run
+2026-02-21 18:58:51,504 | INFO     | root | main.py:156 | logging_middleware | [a717f6f5] ← Response POST /api/backtest/run 200 in 1.15ms
+2026-02-21 18:58:51,793 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:58:51,793 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-RELINFRA 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 18:59:06,522 | INFO     | root | main.py:133 | logging_middleware | [9a384687] → Request GET /api/instruments/search
+2026-02-21 18:59:06,524 | INFO     | api.symbols | symbols.py:155 | search_instruments | [38d45109] Searching instruments: q='it', segment=CASH, exchange=NSE
+2026-02-21 18:59:06,537 | INFO     | api.symbols | symbols.py:202 | search_instruments | [38d45109] Found 20 instruments in 12.36ms
+2026-02-21 18:59:06,537 | INFO     | root | main.py:156 | logging_middleware | [9a384687] ← Response GET /api/instruments/search 200 in 15.11ms
+2026-02-21 18:59:06,989 | INFO     | root | main.py:133 | logging_middleware | [11844507] → Request GET /api/instruments/search
+2026-02-21 18:59:06,989 | INFO     | api.symbols | symbols.py:155 | search_instruments | [211e187c] Searching instruments: q='itc', segment=CASH, exchange=NSE
+2026-02-21 18:59:07,009 | INFO     | api.symbols | symbols.py:202 | search_instruments | [211e187c] Found 9 instruments in 19.81ms
+2026-02-21 18:59:07,010 | INFO     | root | main.py:156 | logging_middleware | [11844507] ← Response GET /api/instruments/search 200 in 20.77ms
+2026-02-21 18:59:08,884 | INFO     | root | main.py:133 | logging_middleware | [8a3b1937] → Request GET /api/instruments/search
+2026-02-21 18:59:08,885 | INFO     | api.symbols | symbols.py:155 | search_instruments | [f07d0179] Searching instruments: q='ITC', segment=CASH, exchange=NSE
+2026-02-21 18:59:08,901 | INFO     | api.symbols | symbols.py:202 | search_instruments | [f07d0179] Found 9 instruments in 16.21ms
+2026-02-21 18:59:08,901 | INFO     | root | main.py:156 | logging_middleware | [8a3b1937] ← Response GET /api/instruments/search 200 in 17.07ms
+2026-02-21 18:59:12,517 | INFO     | root | main.py:133 | logging_middleware | [51112f73] → Request POST /api/backtest/run
+2026-02-21 18:59:12,519 | INFO     | root | main.py:156 | logging_middleware | [51112f73] ← Response POST /api/backtest/run 200 in 2.57ms
+2026-02-21 18:59:12,720 | INFO     | backtest_cache | backtest_cache.py:234 | get_candles | Backtest cache: fetched 0 candles for NSE-ITC 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 18:59:12,720 | WARNING  | backtest_cache | backtest_cache.py:247 | get_candles | Backtest cache: API returned 0 candles for NSE-ITC 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 19:14:19,617 | INFO     | root | main.py:133 | logging_middleware | [d8eda316] → Request GET /api/instruments/search
+2026-02-21 19:14:19,619 | INFO     | api.symbols | symbols.py:155 | search_instruments | [0f586eaa] Searching instruments: q='RELIANCE', segment=CASH, exchange=NSE
+2026-02-21 19:14:19,645 | INFO     | api.symbols | symbols.py:202 | search_instruments | [0f586eaa] Found 3 instruments in 26.39ms
+2026-02-21 19:14:19,646 | INFO     | root | main.py:156 | logging_middleware | [d8eda316] ← Response GET /api/instruments/search 200 in 29.40ms
+2026-02-21 19:25:01,954 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 19:25:01,956 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 19:25:01,956 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 19:25:01,956 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 19:25:16,962 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 19:25:16,962 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 19:25:16,962 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 19:25:21,344 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 19:25:21,346 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 19:25:21,346 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 19:25:21,802 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 19:25:21,803 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 19:25:21,818 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 19:25:21,819 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 19:25:21,819 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 19:25:21,819 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 19:25:21,819 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 19:25:21,819 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 19:25:21,820 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 19:25:21,820 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 19:25:21,820 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 19:25:21,820 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 19:25:21,820 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 19:25:21,820 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 19:25:21,820 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 19:25:21,821 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 19:25:21,821 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 19:25:21,821 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 19:57:01,501 | INFO     | root | main.py:133 | logging_middleware | [9968f4aa] → Request GET /api/instruments/search
+2026-02-21 19:57:01,509 | INFO     | infrastructure | groww_client.py:120 | __init__ | GrowwClient initialized
+2026-02-21 19:57:01,509 | INFO     | infrastructure | groww_client.py:262 | get_groww_client | Created new GrowwClient instance
+2026-02-21 19:57:01,511 | INFO     | api.symbols | symbols.py:155 | search_instruments | [342d457d] Searching instruments: q='iu', segment=CASH, exchange=NSE
+2026-02-21 19:57:01,634 | INFO     | infrastructure | groww_client.py:77 | _create_groww_client | Loaded persisted token from disk (age 11108s)
+2026-02-21 19:57:05,115 | INFO     | api.symbols | symbols.py:202 | search_instruments | [342d457d] Found 7 instruments in 3604.00ms
+2026-02-21 19:57:05,116 | INFO     | root | main.py:156 | logging_middleware | [9968f4aa] ← Response GET /api/instruments/search 200 in 3614.58ms
+2026-02-21 19:57:05,116 | INFO     | root | main.py:133 | logging_middleware | [46cffc1f] → Request GET /api/instruments/search
+2026-02-21 19:57:05,117 | INFO     | api.symbols | symbols.py:155 | search_instruments | [61d3c637] Searching instruments: q='it', segment=CASH, exchange=NSE
+2026-02-21 19:57:05,127 | INFO     | api.symbols | symbols.py:202 | search_instruments | [61d3c637] Found 20 instruments in 9.99ms
+2026-02-21 19:57:05,127 | INFO     | root | main.py:156 | logging_middleware | [46cffc1f] ← Response GET /api/instruments/search 200 in 10.62ms
+2026-02-21 19:57:07,311 | INFO     | root | main.py:133 | logging_middleware | [1fd60193] → Request GET /api/instruments/search
+2026-02-21 19:57:07,312 | INFO     | api.symbols | symbols.py:155 | search_instruments | [56c07109] Searching instruments: q='itc', segment=CASH, exchange=NSE
+2026-02-21 19:57:07,327 | INFO     | api.symbols | symbols.py:202 | search_instruments | [56c07109] Found 9 instruments in 15.33ms
+2026-02-21 19:57:07,327 | INFO     | root | main.py:156 | logging_middleware | [1fd60193] ← Response GET /api/instruments/search 200 in 16.55ms
+2026-02-21 19:57:09,871 | INFO     | root | main.py:133 | logging_middleware | [b5594100] → Request GET /api/instruments/search
+2026-02-21 19:57:09,872 | INFO     | api.symbols | symbols.py:155 | search_instruments | [a62b0d68] Searching instruments: q='ITCHOTELS', segment=CASH, exchange=NSE
+2026-02-21 19:57:09,886 | INFO     | api.symbols | symbols.py:202 | search_instruments | [a62b0d68] Found 1 instruments in 14.36ms
+2026-02-21 19:57:09,886 | INFO     | root | main.py:156 | logging_middleware | [b5594100] ← Response GET /api/instruments/search 200 in 15.14ms
+2026-02-21 19:57:17,077 | INFO     | root | main.py:133 | logging_middleware | [7774eded] → Request OPTIONS /api/backtest/run
+2026-02-21 19:57:17,079 | INFO     | root | main.py:156 | logging_middleware | [7774eded] ← Response OPTIONS /api/backtest/run 200 in 1.31ms
+2026-02-21 19:57:17,081 | INFO     | root | main.py:133 | logging_middleware | [0051e2d1] → Request POST /api/backtest/run
+2026-02-21 19:57:17,084 | INFO     | root | main.py:156 | logging_middleware | [0051e2d1] ← Response POST /api/backtest/run 200 in 3.27ms
+2026-02-21 19:57:17,089 | INFO     | strategies.registry | registry.py:25 | register | Registered strategy: momentum_scalp -> MomentumScalping
+2026-02-21 19:57:17,089 | INFO     | strategies.registry | registry.py:25 | register | Registered strategy: mean_reversion -> MeanReversion
+2026-02-21 19:57:17,090 | INFO     | strategies.registry | registry.py:59 | initialize | Initialized StrategyRegistry with 2 strategies
+2026-02-21 19:57:17,282 | INFO     | backtest_cache | backtest_cache.py:233 | get_candles | Backtest cache: fetched 393 candles for NSE-ITCHOTELS 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 19:57:17,299 | INFO     | backtest_engine | backtest_engine.py:368 | run_backtest | Saved backtest run 13 for NSE-ITCHOTELS
+2026-02-21 19:57:17,312 | INFO     | root | main.py:133 | logging_middleware | [dfd7ff57] → Request GET /api/backtest/history
+2026-02-21 19:57:17,318 | INFO     | root | main.py:156 | logging_middleware | [dfd7ff57] ← Response GET /api/backtest/history 200 in 5.63ms
+2026-02-21 20:15:28,040 | INFO     | root | main.py:133 | logging_middleware | [98e4e892] → Request GET /api/instruments/search
+2026-02-21 20:15:28,042 | INFO     | api.symbols | symbols.py:155 | search_instruments | [d38e4df6] Searching instruments: q='ITCHOTELS', segment=FNO, exchange=NSE
+2026-02-21 20:15:28,110 | INFO     | api.symbols | symbols.py:202 | search_instruments | [d38e4df6] Found 0 instruments in 67.60ms
+2026-02-21 20:15:28,110 | INFO     | root | main.py:156 | logging_middleware | [98e4e892] ← Response GET /api/instruments/search 200 in 70.46ms
+2026-02-21 20:15:32,881 | INFO     | root | main.py:133 | logging_middleware | [08ab916e] → Request GET /api/instruments/search
+2026-02-21 20:15:32,882 | INFO     | api.symbols | symbols.py:155 | search_instruments | [63fff534] Searching instruments: q='ITCHOTEL', segment=FNO, exchange=NSE
+2026-02-21 20:15:32,934 | INFO     | api.symbols | symbols.py:202 | search_instruments | [63fff534] Found 0 instruments in 51.38ms
+2026-02-21 20:15:32,934 | INFO     | root | main.py:156 | logging_middleware | [08ab916e] ← Response GET /api/instruments/search 200 in 52.34ms
+2026-02-21 20:15:37,008 | INFO     | root | main.py:133 | logging_middleware | [7835438b] → Request GET /api/instruments/search
+2026-02-21 20:15:37,008 | INFO     | api.symbols | symbols.py:155 | search_instruments | [42f81fbc] Searching instruments: q='niof', segment=FNO, exchange=NSE
+2026-02-21 20:15:37,066 | INFO     | api.symbols | symbols.py:202 | search_instruments | [42f81fbc] Found 0 instruments in 57.76ms
+2026-02-21 20:15:37,066 | INFO     | root | main.py:156 | logging_middleware | [7835438b] ← Response GET /api/instruments/search 200 in 58.65ms
+2026-02-21 20:15:38,326 | INFO     | root | main.py:133 | logging_middleware | [66cc2501] → Request GET /api/instruments/search
+2026-02-21 20:15:38,327 | INFO     | api.symbols | symbols.py:155 | search_instruments | [5651a1bd] Searching instruments: q='nif', segment=FNO, exchange=NSE
+2026-02-21 20:15:38,387 | INFO     | api.symbols | symbols.py:202 | search_instruments | [5651a1bd] Found 20 instruments in 59.95ms
+2026-02-21 20:15:38,387 | INFO     | root | main.py:156 | logging_middleware | [66cc2501] ← Response GET /api/instruments/search 200 in 61.03ms
+2026-02-21 20:15:39,323 | INFO     | root | main.py:133 | logging_middleware | [1af507a7] → Request GET /api/instruments/search
+2026-02-21 20:15:39,325 | INFO     | api.symbols | symbols.py:155 | search_instruments | [cc81acc4] Searching instruments: q='nifty', segment=FNO, exchange=NSE
+2026-02-21 20:15:39,396 | INFO     | api.symbols | symbols.py:202 | search_instruments | [cc81acc4] Found 20 instruments in 71.51ms
+2026-02-21 20:15:39,397 | INFO     | root | main.py:156 | logging_middleware | [1af507a7] ← Response GET /api/instruments/search 200 in 74.15ms
+2026-02-21 20:15:46,785 | INFO     | root | main.py:133 | logging_middleware | [6ec256fd] → Request GET /api/instruments/search
+2026-02-21 20:15:46,787 | INFO     | api.symbols | symbols.py:155 | search_instruments | [3e929092] Searching instruments: q='BANKNIFTY26APR46100CE', segment=FNO, exchange=NSE
+2026-02-21 20:15:46,829 | INFO     | api.symbols | symbols.py:202 | search_instruments | [3e929092] Found 1 instruments in 41.99ms
+2026-02-21 20:15:46,829 | INFO     | root | main.py:156 | logging_middleware | [6ec256fd] ← Response GET /api/instruments/search 200 in 44.54ms
+2026-02-21 20:15:51,441 | INFO     | root | main.py:133 | logging_middleware | [e1aaf258] → Request OPTIONS /api/backtest/run
+2026-02-21 20:15:51,441 | INFO     | root | main.py:156 | logging_middleware | [e1aaf258] ← Response OPTIONS /api/backtest/run 200 in 0.27ms
+2026-02-21 20:15:51,442 | INFO     | root | main.py:133 | logging_middleware | [0eb6c233] → Request POST /api/backtest/run
+2026-02-21 20:15:51,443 | INFO     | root | main.py:156 | logging_middleware | [0eb6c233] ← Response POST /api/backtest/run 200 in 0.92ms
+2026-02-21 20:15:51,762 | INFO     | backtest_cache | backtest_cache.py:233 | get_candles | Backtest cache: fetched 0 candles for NSE-BANKNIFTY-28Apr26-46100-CE 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 20:15:51,762 | WARNING  | backtest_cache | backtest_cache.py:246 | get_candles | Backtest cache: API returned 0 candles for NSE-BANKNIFTY-28Apr26-46100-CE 5minute (2026-02-16 09:15:00–2026-02-20 15:30:00). Response: {'candles': [], 'closing_price': None, 'start_time': None, 'end_time': None, 'interval_in_minutes': None}
+2026-02-21 20:43:22,042 | INFO     | root | main.py:133 | logging_middleware | [8b6d1e0d] → Request GET /api/instruments/search
+2026-02-21 20:43:22,044 | INFO     | api.symbols | symbols.py:155 | search_instruments | [c9681a6b] Searching instruments: q='netweb', segment=FNO, exchange=NSE
+2026-02-21 20:43:22,122 | INFO     | api.symbols | symbols.py:202 | search_instruments | [c9681a6b] Found 0 instruments in 77.60ms
+2026-02-21 20:43:22,122 | INFO     | root | main.py:156 | logging_middleware | [8b6d1e0d] ← Response GET /api/instruments/search 200 in 80.30ms
+2026-02-21 20:43:28,316 | INFO     | root | main.py:133 | logging_middleware | [d2cb8b87] → Request GET /api/instruments/search
+2026-02-21 20:43:28,317 | INFO     | api.symbols | symbols.py:155 | search_instruments | [9432255f] Searching instruments: q='netweb', segment=CASH, exchange=NSE
+2026-02-21 20:43:28,340 | INFO     | api.symbols | symbols.py:202 | search_instruments | [9432255f] Found 1 instruments in 22.92ms
+2026-02-21 20:43:28,340 | INFO     | root | main.py:156 | logging_middleware | [d2cb8b87] ← Response GET /api/instruments/search 200 in 24.00ms
+2026-02-21 20:43:29,905 | INFO     | root | main.py:133 | logging_middleware | [e7f459ef] → Request GET /api/instruments/search
+2026-02-21 20:43:29,906 | INFO     | api.symbols | symbols.py:155 | search_instruments | [40025368] Searching instruments: q='NETWEB', segment=CASH, exchange=NSE
+2026-02-21 20:43:29,917 | INFO     | api.symbols | symbols.py:202 | search_instruments | [40025368] Found 1 instruments in 11.05ms
+2026-02-21 20:43:29,917 | INFO     | root | main.py:156 | logging_middleware | [e7f459ef] ← Response GET /api/instruments/search 200 in 11.60ms
+2026-02-21 20:43:32,158 | INFO     | root | main.py:133 | logging_middleware | [0b58fb2d] → Request OPTIONS /api/backtest/run
+2026-02-21 20:43:32,159 | INFO     | root | main.py:156 | logging_middleware | [0b58fb2d] ← Response OPTIONS /api/backtest/run 200 in 0.58ms
+2026-02-21 20:43:32,160 | INFO     | root | main.py:133 | logging_middleware | [316cc78d] → Request POST /api/backtest/run
+2026-02-21 20:43:32,162 | INFO     | root | main.py:156 | logging_middleware | [316cc78d] ← Response POST /api/backtest/run 200 in 1.49ms
+2026-02-21 20:43:32,518 | INFO     | backtest_cache | backtest_cache.py:233 | get_candles | Backtest cache: fetched 394 candles for NSE-NETWEB 5minute (2026-02-16 09:15:00 to 2026-02-20 15:30:00)
+2026-02-21 20:43:32,560 | INFO     | backtest_engine | backtest_engine.py:368 | run_backtest | Saved backtest run 14 for NSE-NETWEB
+2026-02-21 20:43:32,568 | INFO     | root | main.py:133 | logging_middleware | [3a0e1669] → Request GET /api/backtest/history
+2026-02-21 20:43:32,570 | INFO     | root | main.py:156 | logging_middleware | [3a0e1669] ← Response GET /api/backtest/history 200 in 2.28ms
+2026-02-21 20:46:35,781 | INFO     | root | main.py:133 | logging_middleware | [dacaf09e] → Request POST /api/backtest/run
+2026-02-21 20:46:35,783 | INFO     | root | main.py:156 | logging_middleware | [dacaf09e] ← Response POST /api/backtest/run 200 in 2.68ms
+2026-02-21 20:46:35,859 | INFO     | backtest_engine | backtest_engine.py:368 | run_backtest | Saved backtest run 15 for NSE-NETWEB
+2026-02-21 20:46:35,869 | INFO     | root | main.py:133 | logging_middleware | [36609433] → Request GET /api/backtest/history
+2026-02-21 20:46:35,872 | INFO     | root | main.py:156 | logging_middleware | [36609433] ← Response GET /api/backtest/history 200 in 2.26ms
+2026-02-21 20:47:13,126 | INFO     | root | main.py:133 | logging_middleware | [3e4bf4fc] → Request POST /api/backtest/run
+2026-02-21 20:47:13,128 | INFO     | root | main.py:156 | logging_middleware | [3e4bf4fc] ← Response POST /api/backtest/run 200 in 1.42ms
+2026-02-21 20:47:13,172 | INFO     | backtest_engine | backtest_engine.py:368 | run_backtest | Saved backtest run 16 for NSE-NETWEB
+2026-02-21 20:47:13,183 | INFO     | root | main.py:133 | logging_middleware | [431c139c] → Request GET /api/backtest/history
+2026-02-21 20:47:13,185 | INFO     | root | main.py:156 | logging_middleware | [431c139c] ← Response GET /api/backtest/history 200 in 2.15ms
+2026-02-21 20:55:13,259 | INFO     | root | main.py:133 | logging_middleware | [4c631fd0] → Request OPTIONS /api/backtest/run
+2026-02-21 20:55:13,260 | INFO     | root | main.py:156 | logging_middleware | [4c631fd0] ← Response OPTIONS /api/backtest/run 200 in 0.91ms
+2026-02-21 20:55:13,261 | INFO     | root | main.py:133 | logging_middleware | [8fdd86c0] → Request POST /api/backtest/run
+2026-02-21 20:55:13,262 | INFO     | root | main.py:156 | logging_middleware | [8fdd86c0] ← Response POST /api/backtest/run 200 in 1.10ms
+2026-02-21 20:55:13,280 | INFO     | backtest_engine | backtest_engine.py:368 | run_backtest | Saved backtest run 17 for NSE-NETWEB
+2026-02-21 20:55:13,285 | INFO     | root | main.py:133 | logging_middleware | [c19fb48c] → Request GET /api/backtest/history
+2026-02-21 20:55:13,288 | INFO     | root | main.py:156 | logging_middleware | [c19fb48c] ← Response GET /api/backtest/history 200 in 3.64ms
+2026-02-21 21:16:09,213 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 21:16:09,218 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 21:16:09,218 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 21:16:09,218 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 21:16:22,438 | INFO     | services.algo_engine | algo_engine.py:274 | _loop | AlgoEngine loop exiting
+2026-02-21 21:16:22,441 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 21:16:22,441 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 21:16:22,441 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 21:16:25,912 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 21:16:25,912 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 21:16:25,912 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 21:16:26,422 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 21:16:26,422 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 21:16:26,439 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 21:16:26,441 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 21:16:26,442 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 21:16:26,442 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 21:16:26,442 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 21:16:26,442 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 21:16:26,443 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 21:16:26,443 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 21:16:26,443 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 21:16:26,443 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 21:16:26,443 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 21:16:26,443 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 21:16:26,443 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 21:16:26,443 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 21:16:26,443 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 21:16:26,443 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 21:16:36,245 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 21:16:36,245 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 21:16:36,245 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 21:16:36,245 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 21:16:51,250 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 21:16:51,251 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 21:16:51,251 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 21:16:51,465 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 21:16:51,466 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 21:16:51,466 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 21:16:51,859 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 21:16:51,859 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 21:16:51,875 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 21:16:51,875 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 21:16:51,875 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 21:16:51,875 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 21:16:51,875 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 21:16:51,875 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 21:16:51,876 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 21:16:51,876 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 21:16:51,876 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 21:16:51,876 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 21:16:51,876 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 21:16:51,876 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 21:16:51,876 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 21:16:51,876 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 21:16:51,876 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 21:16:51,876 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 21:16:55,816 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 21:16:55,816 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 21:16:55,816 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 21:16:55,816 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 21:17:10,822 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 21:17:10,822 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 21:17:10,822 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 21:17:11,898 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 21:17:11,898 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 21:17:11,898 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 21:17:12,285 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 21:17:12,286 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 21:17:12,305 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 21:17:12,305 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 21:17:12,305 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 21:17:12,305 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 21:17:12,305 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 21:17:12,305 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 21:17:12,306 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 21:17:12,306 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 21:17:12,306 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 21:17:12,306 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 21:17:12,306 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 21:17:12,306 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 21:17:12,306 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 21:17:12,306 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 21:17:12,306 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 21:17:12,306 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 21:17:19,581 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 21:17:19,581 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 21:17:19,581 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 21:17:19,581 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 21:17:34,583 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 21:17:34,583 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 21:17:34,583 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 21:17:37,325 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 21:17:37,326 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 21:17:37,326 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 21:17:37,739 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 21:17:37,740 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 21:17:37,764 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 21:17:37,764 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 21:17:37,765 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 21:17:37,765 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 21:17:37,765 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 21:17:37,765 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 21:17:37,765 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 21:17:37,765 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 21:17:37,765 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 21:17:37,765 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 21:17:37,765 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 21:17:37,765 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 21:17:37,766 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 21:17:37,766 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 21:17:37,766 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 21:17:37,766 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 21:17:55,347 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 21:17:55,347 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 21:17:55,347 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 21:17:55,347 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 21:18:10,352 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 21:18:10,352 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 21:18:10,352 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 21:18:12,802 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 21:18:12,803 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 21:18:12,803 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 21:18:13,184 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 21:18:13,185 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 21:18:13,199 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 21:18:13,200 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 21:18:13,200 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 21:18:13,200 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 21:18:13,200 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 21:18:13,200 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 21:18:13,200 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 21:18:13,200 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 21:18:13,200 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 21:18:13,201 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 21:18:13,201 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 21:18:13,201 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 21:18:13,201 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 21:18:13,201 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 21:18:13,201 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 21:18:13,201 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete
+2026-02-21 21:19:43,951 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-02-21 21:19:43,954 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-02-21 21:19:43,954 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-02-21 21:19:43,954 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
+2026-02-21 21:19:58,958 | INFO     | services.algo_engine | algo_engine.py:154 | stop | AlgoEngine stopped
+2026-02-21 21:19:58,958 | INFO     | root | main.py:97 | lifespan | Algo engine stopped
+2026-02-21 21:19:58,958 | INFO     | root | main.py:99 | lifespan | Stopping position monitor...
+2026-02-21 21:20:03,317 | INFO     | services.position_monitor | position_monitor.py:55 | stop | PositionMonitor stopped
+2026-02-21 21:20:03,317 | INFO     | root | main.py:101 | lifespan | Position monitor stopped
+2026-02-21 21:20:03,317 | INFO     | root | main.py:103 | lifespan | ✅ Server shutdown complete
+2026-02-21 21:20:03,720 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: momentum_scalp (Momentum Scalping) enabled=True
+2026-02-21 21:20:03,721 | INFO     | services.algo_engine | algo_engine.py:130 | register_algo | Registered algo: mean_reversion (Mean Reversion) enabled=True
+2026-02-21 21:20:03,736 | INFO     | root | main.py:239 | <module> | New API routes mounted
+2026-02-21 21:20:03,736 | INFO     | root | main.py:245 | <module> | WebSocket routes mounted
+2026-02-21 21:20:03,736 | INFO     | root | main.py:60 | lifespan | ============================================================
+2026-02-21 21:20:03,736 | INFO     | root | main.py:61 | lifespan | Starting GrowwBot API Server
+2026-02-21 21:20:03,736 | INFO     | root | main.py:62 | lifespan | ============================================================
+2026-02-21 21:20:03,736 | INFO     | root | main.py:65 | lifespan | Initializing database...
+2026-02-21 21:20:03,737 | INFO     | root | main.py:67 | lifespan | Database initialized
+2026-02-21 21:20:03,737 | INFO     | root | main.py:75 | lifespan | Services initialized
+2026-02-21 21:20:03,737 | INFO     | root | main.py:78 | lifespan | Starting position monitor...
+2026-02-21 21:20:03,737 | INFO     | services.position_monitor | position_monitor.py:49 | start | PositionMonitor started (poll every 5s)
+2026-02-21 21:20:03,737 | INFO     | root | main.py:80 | lifespan | Position monitor started
+2026-02-21 21:20:03,737 | INFO     | root | main.py:82 | lifespan | Starting algo engine...
+2026-02-21 21:20:03,737 | INFO     | services.algo_engine | algo_engine.py:267 | _loop | AlgoEngine loop starting
+2026-02-21 21:20:03,737 | INFO     | services.algo_engine | algo_engine.py:144 | start | AlgoEngine started with 2 algorithms: momentum_scalp, mean_reversion
+2026-02-21 21:20:03,737 | INFO     | root | main.py:84 | lifespan | Algo engine started
+2026-02-21 21:20:03,737 | INFO     | root | main.py:86 | lifespan | ✅ Server startup complete

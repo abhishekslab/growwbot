@@ -43,7 +43,7 @@ export default function BacktestTradeTable({ trades }: { trades: BacktestTrade[]
             </tr>
           </thead>
           <tbody>
-            {trades.map((t, i) => {
+            {trades.map((t) => {
               const durationSec = t.exit_time - t.entry_time;
               const durationStr =
                 durationSec >= 3600
@@ -51,7 +51,7 @@ export default function BacktestTradeTable({ trades }: { trades: BacktestTrade[]
                   : `${Math.round(durationSec / 60)}m`;
               return (
                 <tr
-                  key={i}
+                  key={`${t.entry_time}-${t.entry_price}`}
                   className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/30"
                 >
                   <td className="px-4 py-2 text-gray-900 dark:text-gray-100">

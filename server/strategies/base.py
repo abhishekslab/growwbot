@@ -1,0 +1,124 @@
+"""
+Base algorithm class and AlgoSignal dataclass.
+
+All algo strategies inherit from BaseAlgorithm and implement evaluate().
+"""
+
+from typing import Any, Dict, List, Optional
+
+try:
+    from utils.fees import calculate_fees
+except ImportError:
+    from position_monitor import calculate_fees
+
+
+class AlgoSignal:
+    """Signal returned by an algorithm's evaluate() method."""
+
+    __slots__ = (
+        "algo_id",
+        "symbol",
+        "action",
+        "entry_price",
+        "stop_loss",
+        "target",
+        "quantity",
+        "confidence",
+        "reason",
+        "fee_breakeven",
+        "expected_profit",
+    )
+
+    def __init__(
+        self,
+        algo_id: str,
+        symbol: str,
+        action: str,
+        entry_price: float,
+        stop_loss: float,
+        target: float,
+        quantity: int,
+        confidence: float,
+        reason: str,
+        fee_breakeven: float,
+        expected_profit: float,
+    ):
+        self.algo_id = algo_id
+        self.symbol = symbol
+        self.action = action
+        self.entry_price = entry_price
+        self.stop_loss = stop_loss
+        self.target = target
+        self.quantity = quantity
+        self.confidence = confidence
+        self.reason = reason
+        self.fee_breakeven = fee_breakeven
+        self.expected_profit = expected_profit
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "algo_id": self.algo_id,
+            "symbol": self.symbol,
+            "action": self.action,
+            "entry_price": self.entry_price,
+            "stop_loss": self.stop_loss,
+            "target": self.target,
+            "quantity": self.quantity,
+            "confidence": self.confidence,
+            "reason": self.reason,
+            "fee_breakeven": self.fee_breakeven,
+            "expected_profit": self.expected_profit,
+        }
+
+
+class BaseAlgorithm:
+    """Abstract base class for trading algorithms."""
+
+    ALGO_ID: str = ""
+    ALGO_NAME: str = ""
+    DESCRIPTION: str = ""
+    ALGO_VERSION: str = "1.0"
+    _effective_capital: Optional[float] = None
+    _risk_percent: Optional[float] = None
+
+    def set_runtime_params(self, effective_capital: float, risk_percent: float) -> None:
+        """Called by AlgoEngine before each cycle with per-algo settings."""
+        self._effective_capital = effective_capital
+        self._risk_percent = risk_percent
+
+    def evaluate(self, symbol: str, candles: List[dict], ltp: float, candidate_info: dict) -> Optional[AlgoSignal]:
+        """Evaluate a symbol and return a signal or None.
+
+        Must be overridden by subclasses.
+        """
+        raise NotImplementedError
+
+    def should_skip_symbol(self, symbol: str, candidate_info: dict, open_positions: List[dict]) -> bool:
+        """Return True if this symbol should be skipped (e.g. already has a position)."""
+        for pos in open_positions:
+            if pos.get("symbol") == symbol and pos.get("algo_id") == self.ALGO_ID:
+                return True
+        return False
+
+    def compute_fee_breakeven(self, entry_price: float, quantity: int, trade_type: str = "INTRADAY") -> float:
+        """Compute the minimum price move needed to cover fees (round-trip)."""
+        if quantity <= 0 or entry_price <= 0:
+            return float("inf")
+        fees_buy = calculate_fees(entry_price, quantity, "BUY", trade_type)
+        fees_sell = calculate_fees(entry_price, quantity, "SELL", trade_type)
+        total_fees = fees_buy["total"] + fees_sell["total"]
+        return round(total_fees / quantity, 4)
+
+    def compute_position_size(self, entry_price: float, stop_loss: float, capital: float, risk_pct: float) -> int:
+        """Risk-based position sizing: capital * risk% / risk-per-share."""
+        risk_per_share = abs(entry_price - stop_loss)
+        if risk_per_share <= 0:
+            return 0
+        max_risk = capital * (risk_pct / 100.0)
+        qty = int(max_risk / risk_per_share)
+        max_qty_by_capital = int(capital / entry_price) if entry_price > 0 else 0
+        return min(qty, max_qty_by_capital)
+
+    def clone_with_config(self, overrides: dict) -> "BaseAlgorithm":
+        """Create a fresh instance with merged config (for backtesting). Override in subclasses."""
+        raise NotImplementedError("%s must implement clone_with_config(overrides)" % type(self).__name__)

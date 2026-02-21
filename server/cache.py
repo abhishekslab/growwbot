@@ -12,10 +12,10 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 # TTLs in seconds
-TTL_INSTRUMENTS = 24 * 3600   # 24 hours
-TTL_OHLC = 5 * 60             # 5 minutes
-TTL_HISTORICAL = 24 * 3600    # 24 hours
-TTL_NEWS = 6 * 3600           # 6 hours
+TTL_INSTRUMENTS = 24 * 3600  # 24 hours
+TTL_OHLC = 5 * 60  # 5 minutes
+TTL_HISTORICAL = 24 * 3600  # 24 hours
+TTL_NEWS = 6 * 3600  # 6 hours
 
 
 class _CacheEntry:
@@ -33,14 +33,14 @@ class _CacheEntry:
 class MarketCache:
     def __init__(self):
         self._lock = threading.RLock()
-        self._instruments = None          # _CacheEntry | None
-        self._ohlc = {}                   # frozenset(symbols) -> _CacheEntry
-        self._historical = {}             # symbol -> _CacheEntry
-        self._news = {}                   # company_name -> _CacheEntry
+        self._instruments = None  # _CacheEntry | None
+        self._ohlc = {}  # frozenset(symbols) -> _CacheEntry
+        self._historical = {}  # symbol -> _CacheEntry
+        self._news = {}  # company_name -> _CacheEntry
         self._warming = False
-        self._last_warmup = None          # datetime | None
-        self._ltp = {}                    # str -> float ("NSE_SYMBOL" -> price)
-        self._ltp_updated_at = 0.0        # time.monotonic()
+        self._last_warmup = None  # datetime | None
+        self._ltp = {}  # str -> float ("NSE_SYMBOL" -> price)
+        self._ltp_updated_at = 0.0  # time.monotonic()
 
     # ------------------------------------------------------------------
     # Instruments
@@ -68,9 +68,7 @@ class MarketCache:
                 return entry.data
 
         # Fetch outside lock
-        ohlc = groww.get_ohlc(
-            exchange_trading_symbols=symbols_tuple, segment="CASH"
-        )
+        ohlc = groww.get_ohlc(exchange_trading_symbols=symbols_tuple, segment="CASH")
 
         with self._lock:
             self._ohlc[key] = _CacheEntry(ohlc, TTL_OHLC)
@@ -85,9 +83,7 @@ class MarketCache:
             if entry and entry.alive:
                 return entry.data
 
-        candles = groww.get_historical_candles(
-            "NSE", "CASH", symbol, start_str, end_str, "1day"
-        )
+        candles = groww.get_historical_candles("NSE", "CASH", symbol, start_str, end_str, "1day")
 
         with self._lock:
             self._historical[symbol] = _CacheEntry(candles, TTL_HISTORICAL)
@@ -176,26 +172,14 @@ class MarketCache:
     def status(self):
         with self._lock:
             return {
-                "instruments_cached": bool(
-                    self._instruments and self._instruments.alive
-                ),
-                "ohlc_batches": sum(
-                    1 for e in self._ohlc.values() if e.alive
-                ),
-                "historical_symbols": sum(
-                    1 for e in self._historical.values() if e.alive
-                ),
-                "news_entries": sum(
-                    1 for e in self._news.values() if e.alive
-                ),
+                "instruments_cached": bool(self._instruments and self._instruments.alive),
+                "ohlc_batches": sum(1 for e in self._ohlc.values() if e.alive),
+                "historical_symbols": sum(1 for e in self._historical.values() if e.alive),
+                "news_entries": sum(1 for e in self._news.values() if e.alive),
                 "warming": self._warming,
-                "last_warmup": (
-                    self._last_warmup.isoformat() if self._last_warmup else None
-                ),
+                "last_warmup": (self._last_warmup.isoformat() if self._last_warmup else None),
                 "ltp_symbols": len(self._ltp),
-                "ltp_age_seconds": round(
-                    time.monotonic() - self._ltp_updated_at, 1
-                ) if self._ltp_updated_at > 0 else None,
+                "ltp_age_seconds": round(time.monotonic() - self._ltp_updated_at, 1) if self._ltp_updated_at > 0 else None,
             }
 
     def clear(self):
@@ -207,3 +191,7 @@ class MarketCache:
             self._last_warmup = None
             self._ltp.clear()
             self._ltp_updated_at = 0.0
+
+
+# Module-level singleton instance for easy importing
+market_cache = MarketCache()

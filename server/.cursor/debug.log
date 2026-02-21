@@ -1,0 +1,69 @@
+{"timestamp": 1771677639331, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 1250.15, "vwap": 1250.63}}
+{"timestamp": 1771677639331, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 1250.1, "vwap": 1250.63}}
+{"timestamp": 1771677639332, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 1250.0, "vwap": 1250.62}}
+{"timestamp": 1771677639332, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.6, "threshold": 1.5}}
+{"timestamp": 1771677639332, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.5, "threshold": 1.5}}
+{"timestamp": 1771677639332, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.7, "threshold": 1.5}}
+{"timestamp": 1771677639333, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.9, "threshold": 1.5}}
+{"timestamp": 1771677639333, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.3, "threshold": 1.5}}
+{"timestamp": 1771677639333, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.0, "threshold": 1.5}}
+{"timestamp": 1771677639335, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.8, "threshold": 1.5}}
+{"timestamp": 1771677639335, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.3, "threshold": 1.5}}
+{"timestamp": 1771677639335, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.6, "threshold": 1.5}}
+{"timestamp": 1771677639340, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.4, "threshold": 1.5}}
+{"timestamp": 1771677639342, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 1219.05, "vwap": 1220.62}}
+{"timestamp": 1771677639342, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.3, "threshold": 1.5}}
+{"timestamp": 1771677639345, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.0, "threshold": 1.5}}
+{"timestamp": 1771677639345, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.2, "threshold": 1.5}}
+{"timestamp": 1771677639345, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 1213.45, "vwap": 1214.72}}
+{"timestamp": 1771686995787, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.3, "threshold": 1.5}}
+{"timestamp": 1771686995832, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 75.3, "min": 40, "max": 65, "candles": 81}}
+{"timestamp": 1771686995835, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 3095.9, "vwap": 3099.04}}
+{"timestamp": 1771686995836, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 3084.3, "vwap": 3097.3}}
+{"timestamp": 1771686995841, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.2, "threshold": 1.5}}
+{"timestamp": 1771686995842, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.8, "threshold": 1.5}}
+{"timestamp": 1771686995842, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.0, "threshold": 1.5}}
+{"timestamp": 1771686995847, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.0, "threshold": 1.5}}
+{"timestamp": 1771686995847, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.0, "threshold": 1.5}}
+{"timestamp": 1771686995847, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 81.3, "min": 40, "max": 65, "candles": 239}}
+{"timestamp": 1771686995850, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.4, "threshold": 1.5}}
+{"timestamp": 1771686995853, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 68.7, "min": 40, "max": 65, "candles": 331}}
+{"timestamp": 1771686995855, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.1, "threshold": 1.5}}
+{"timestamp": 1771686995855, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.3, "threshold": 1.5}}
+{"timestamp": 1771686995855, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.7, "threshold": 1.5}}
+{"timestamp": 1771686995856, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.9, "threshold": 1.5}}
+{"timestamp": 1771686995856, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.1, "threshold": 1.5}}
+{"timestamp": 1771687033132, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.3, "threshold": 1.5}}
+{"timestamp": 1771687033134, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 75.3, "min": 40, "max": 65, "candles": 81}}
+{"timestamp": 1771687033134, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 3095.9, "vwap": 3099.04}}
+{"timestamp": 1771687033134, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 3084.3, "vwap": 3097.3}}
+{"timestamp": 1771687033136, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.2, "threshold": 1.5}}
+{"timestamp": 1771687033136, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.8, "threshold": 1.5}}
+{"timestamp": 1771687033136, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.0, "threshold": 1.5}}
+{"timestamp": 1771687033144, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.0, "threshold": 1.5}}
+{"timestamp": 1771687033145, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.0, "threshold": 1.5}}
+{"timestamp": 1771687033145, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 81.3, "min": 40, "max": 65, "candles": 239}}
+{"timestamp": 1771687033150, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.4, "threshold": 1.5}}
+{"timestamp": 1771687033157, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 68.7, "min": 40, "max": 65, "candles": 331}}
+{"timestamp": 1771687033162, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.1, "threshold": 1.5}}
+{"timestamp": 1771687033163, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.3, "threshold": 1.5}}
+{"timestamp": 1771687033166, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.7, "threshold": 1.5}}
+{"timestamp": 1771687033166, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.9, "threshold": 1.5}}
+{"timestamp": 1771687033167, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.1, "threshold": 1.5}}
+{"timestamp": 1771687513265, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.3, "threshold": 1.5}}
+{"timestamp": 1771687513265, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 75.3, "min": 40, "max": 65, "candles": 81}}
+{"timestamp": 1771687513266, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 3095.9, "vwap": 3099.04}}
+{"timestamp": 1771687513266, "location": "algo_momentum.py", "hypothesisId": "H-E", "message": "VWAP rejected", "data": {"ltp": 3084.3, "vwap": 3097.3}}
+{"timestamp": 1771687513266, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.2, "threshold": 1.5}}
+{"timestamp": 1771687513266, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.8, "threshold": 1.5}}
+{"timestamp": 1771687513266, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.0, "threshold": 1.5}}
+{"timestamp": 1771687513269, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.0, "threshold": 1.5}}
+{"timestamp": 1771687513269, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.0, "threshold": 1.5}}
+{"timestamp": 1771687513269, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 81.3, "min": 40, "max": 65, "candles": 239}}
+{"timestamp": 1771687513270, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.4, "threshold": 1.5}}
+{"timestamp": 1771687513273, "location": "algo_momentum.py", "hypothesisId": "H-C", "message": "RSI rejected", "data": {"rsi": 68.7, "min": 40, "max": 65, "candles": 331}}
+{"timestamp": 1771687513275, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.1, "threshold": 1.5}}
+{"timestamp": 1771687513275, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.3, "threshold": 1.5}}
+{"timestamp": 1771687513276, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.7, "threshold": 1.5}}
+{"timestamp": 1771687513276, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 0.9, "threshold": 1.5}}
+{"timestamp": 1771687513276, "location": "algo_momentum.py", "hypothesisId": "H-D", "message": "Volume rejected", "data": {"ratio": 1.1, "threshold": 1.5}}

@@ -14,19 +14,46 @@ from typing import Any, Dict, Generator, List, Optional
 
 # #region agent log
 _DBG_LOG = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".cursor", "debug.log")
+
+
 def _dbg(msg, data, hyp="general"):
     try:
         os.makedirs(os.path.dirname(_DBG_LOG), exist_ok=True)
         with open(_DBG_LOG, "a") as _f:
-            _f.write(json.dumps({"timestamp": int(time.time()*1000), "location": "backtest_engine.py", "hypothesisId": hyp, "message": msg, "data": data}) + "\n")
+            _f.write(
+                json.dumps(
+                    {"timestamp": int(time.time() * 1000), "location": "backtest_engine.py", "hypothesisId": hyp, "message": msg, "data": data}
+                )
+                + "\n"
+            )
     except Exception:
         pass
+
+
 # #endregion
 
 
 from position_monitor import calculate_fees, compute_exit_pnl
 
 from backtest_cache import get_candles as cache_get_candles
+from backtest_cache import get_cache_stats, clear_cache
+from backtest_db import save_backtest_run, list_backtest_runs, get_backtest_run, delete_backtest_run
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+# Wrapper functions for API compatibility
+def backtest_cache_stats():
+    return get_cache_stats()
+
+
+def backtest_clear_cache(groww_symbol=None):
+    return clear_cache(groww_symbol)
+
+
+def backtest_get_candles(groww, groww_symbol, segment, interval, start_date, end_date, exchange):
+    return cache_get_candles(groww, groww_symbol, segment, interval, start_date, end_date, exchange)
 
 
 def _compute_metrics(
@@ -71,15 +98,9 @@ def _compute_metrics(
     final_equity = initial_capital + total_pnl if trades else initial_capital
     if equity_curve:
         final_equity = equity_curve[-1]["equity"]
-    total_return_pct = (
-        (final_equity - initial_capital) / initial_capital * 100.0
-        if initial_capital > 0
-        else 0.0
-    )
+    total_return_pct = (final_equity - initial_capital) / initial_capital * 100.0 if initial_capital > 0 else 0.0
     win_rate = (wins / len(trades) * 100.0) if trades else 0.0
-    profit_factor = (
-        (gross_profit / abs(gross_loss)) if gross_loss < 0 else (float("inf") if gross_profit > 0 else 0.0)
-    )
+    profit_factor = (gross_profit / abs(gross_loss)) if gross_loss < 0 else (float("inf") if gross_profit > 0 else 0.0)
     expectancy = (avg_win * (wins / len(trades)) + avg_loss * (losses / len(trades))) if trades else 0.0
 
     # Max drawdown from equity curve
@@ -116,19 +137,11 @@ def _compute_metrics(
         sortino_ratio = 0.0
     else:
         mean_ret = sum(daily_returns) / len(daily_returns)
-        std_ret = math.sqrt(
-            sum((r - mean_ret) ** 2 for r in daily_returns) / len(daily_returns)
-        )
+        std_ret = math.sqrt(sum((r - mean_ret) ** 2 for r in daily_returns) / len(daily_returns))
         sharpe_ratio = (mean_ret / std_ret * math.sqrt(252)) if std_ret > 0 else 0.0
         downside_returns = [r for r in daily_returns if r < 0]
-        downside_std = (
-            math.sqrt(sum(r ** 2 for r in downside_returns) / len(downside_returns))
-            if downside_returns
-            else 0.0
-        )
-        sortino_ratio = (
-            (mean_ret / downside_std * math.sqrt(252)) if downside_std > 0 else 0.0
-        )
+        downside_std = math.sqrt(sum(r**2 for r in downside_returns) / len(downside_returns)) if downside_returns else 0.0
+        sortino_ratio = (mean_ret / downside_std * math.sqrt(252)) if downside_std > 0 else 0.0
 
     return {
         "initial_capital": initial_capital,
@@ -191,9 +204,7 @@ def run_backtest(
         }
         return
 
-    candles = cache_get_candles(
-        groww, groww_symbol, segment, candle_interval, start_date, end_date, exchange
-    )
+    candles = cache_get_candles(groww, groww_symbol, segment, candle_interval, start_date, end_date, exchange)
     total_bars = len(candles)
     if total_bars == 0:
         yield {
@@ -244,9 +255,7 @@ def run_backtest(
             if exit_price is not None and exit_trigger:
                 qty = open_position["quantity"]
                 trade_type = open_position.get("trade_type", "INTRADAY")
-                net_pnl, total_fees = compute_exit_pnl(
-                    entry, exit_price, qty, trade_type
-                )
+                net_pnl, total_fees = compute_exit_pnl(entry, exit_price, qty, trade_type)
                 realized_pnl += net_pnl
                 closed = {
                     "entry_price": entry,
@@ -278,10 +287,9 @@ def run_backtest(
                 "open_interest": candle.get("open_interest", 0),
             }
             try:
-                signal = algo.evaluate(
-                    groww_symbol, candles[: i + 1], candle["close"], candidate_info
-                )
-            except Exception:
+                signal = algo.evaluate(groww_symbol, candles[: i + 1], candle["close"], candidate_info)
+            except Exception as e:
+                logger.error(f"Strategy evaluation error at bar {i} for {groww_symbol}: {e}")
                 signal = None
             if signal and signal.action == "BUY" and max_positions >= 1:
                 open_position = {
@@ -305,12 +313,6 @@ def run_backtest(
                 "total_bars": total_bars,
             }
 
-    # #region agent log
-    _dbg("First candle sample", {"candle_0": candles[0] if candles else None, "candle_30": candles[30] if len(candles) > 30 else None, "runId": "post-fix"}, "data-check")
-    rejection_counts = getattr(algo, "_dbg_counts", {})
-    _dbg("Rejection summary (post-fix)", {"total_bars": total_bars, "trades": len(trades), "rejections": rejection_counts, "signal_analysis_keys": list(signal_analysis.keys()), "runId": "post-fix"}, "summary")
-    # #endregion
-
     _REJECTION_LABELS = {
         "H-A_ema_bearish": "EMA Bearish (EMA9 ≤ EMA21) — no uptrend",
         "H-B_no_crossover": "No Recent Crossover (last 3 bars)",
@@ -322,11 +324,57 @@ def run_backtest(
     raw_counts = getattr(algo, "_dbg_counts", {})
     signal_analysis = {_REJECTION_LABELS.get(k, k): v for k, v in raw_counts.items()} if raw_counts else {}
 
+    # #region agent log
+    _dbg(
+        "First candle sample",
+        {"candle_0": candles[0] if candles else None, "candle_30": candles[30] if len(candles) > 30 else None, "runId": "post-fix"},
+        "data-check",
+    )
+    rejection_counts = getattr(algo, "_dbg_counts", {})
+    _dbg(
+        "Rejection summary (post-fix)",
+        {
+            "total_bars": total_bars,
+            "trades": len(trades),
+            "rejections": rejection_counts,
+            "signal_analysis_keys": list(signal_analysis.keys()),
+            "runId": "post-fix",
+        },
+        "summary",
+    )
+    # #endregion
+
     metrics = _compute_metrics(initial_capital, trades, equity_curve)
+
+    # Save results to database
+    try:
+        run_id = save_backtest_run(
+            algo_id=algo.ALGO_ID,
+            groww_symbol=groww_symbol,
+            exchange=exchange,
+            segment=segment,
+            interval=candle_interval,
+            start_date=start_date,
+            end_date=end_date,
+            config={
+                "initial_capital": initial_capital,
+                "risk_percent": risk_percent,
+                "max_positions": max_positions,
+            },
+            metrics=metrics,
+            trades=trades,
+            equity_curve=equity_curve,
+        )
+        logger.info(f"Saved backtest run {run_id} for {groww_symbol}")
+    except Exception as e:
+        logger.error(f"Failed to save backtest run: {e}")
+        run_id = None
+
     yield {
         "event_type": "complete",
         "metrics": metrics,
         "trades": trades,
         "equity_curve": equity_curve,
         "signal_analysis": signal_analysis,
+        "run_id": run_id,
     }

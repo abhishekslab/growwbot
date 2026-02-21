@@ -77,6 +77,7 @@ def _init_schema(conn: sqlite3.Connection) -> None:
 def _to_unix(ts: Any) -> int:
     """Convert various timestamp formats to Unix seconds."""
     import time
+
     if isinstance(ts, (int, float)):
         return int(ts) if ts < 1e12 else int(ts / 1000)
     if isinstance(ts, str):
@@ -176,9 +177,7 @@ def get_candles(
     cached_by_date = {}
     placeholders = ",".join("?" for _ in all_dates)
     cursor = conn.execute(
-        "SELECT date, candles_json FROM candle_cache "
-        "WHERE groww_symbol = ? AND segment = ? AND interval = ? AND date IN (%s)"
-        % placeholders,
+        "SELECT date, candles_json FROM candle_cache WHERE groww_symbol = ? AND segment = ? AND interval = ? AND date IN (%s)" % placeholders,
         [groww_symbol, segment, interval] + all_dates,
     )
     for row in cursor.fetchall():
@@ -211,13 +210,13 @@ def get_candles(
             start_str = chunk_start.strftime("%Y-%m-%d " + MARKET_START_TIME)
             end_str = chunk_end.strftime("%Y-%m-%d " + MARKET_END_TIME)
             try:
+                # Use groww_symbol as-is (already includes exchange prefix, e.g., "NSE-RELIANCE")
                 raw = groww.get_historical_candles(
+                    symbol=groww_symbol,
                     exchange=exchange,
-                    segment=segment,
-                    groww_symbol=groww_symbol,
-                    start_time=start_str,
-                    end_time=end_str,
-                    candle_interval=interval,
+                    from_date=start_str,
+                    to_date=end_str,
+                    interval=interval,
                 )
                 # Log response shape for debugging (avoid dumping full payloads)
                 if isinstance(raw, dict):
@@ -227,11 +226,17 @@ def get_candles(
                         len(raw.get("candles", raw.get("data", []))),
                     )
                 else:
-                    logger.debug("Backtest cache: API response type=%s len=%s", type(raw).__name__, len(raw) if isinstance(raw, (list, tuple)) else "?")
+                    logger.debug(
+                        "Backtest cache: API response type=%s len=%s", type(raw).__name__, len(raw) if isinstance(raw, (list, tuple)) else "?"
+                    )
                 candles = _parse_candles_response(raw)
                 logger.info(
                     "Backtest cache: fetched %d candles for %s %s (%s to %s)",
-                    len(candles), groww_symbol, interval, start_str, end_str,
+                    len(candles),
+                    groww_symbol,
+                    interval,
+                    start_str,
+                    end_str,
                 )
                 if len(candles) == 0:
                     # Help debug empty data: log response shape/sample
@@ -240,13 +245,20 @@ def get_candles(
                         raw_preview = {k: (v[:2] if isinstance(v, list) and len(v) > 2 else v) for k, v in raw.items()}
                     logger.warning(
                         "Backtest cache: API returned 0 candles for %s %s (%s–%s). Response: %s",
-                        groww_symbol, interval, start_str, end_str,
+                        groww_symbol,
+                        interval,
+                        start_str,
+                        end_str,
                         str(raw_preview)[:500],
                     )
             except Exception as e:
                 logger.warning(
                     "Backtest cache: fetch failed %s %s %s-%s: %s",
-                    groww_symbol, interval, start_str, end_str, e,
+                    groww_symbol,
+                    interval,
+                    start_str,
+                    end_str,
+                    e,
                 )
                 raise
 
@@ -263,9 +275,7 @@ def get_candles(
                 day_candles.sort(key=lambda x: x["time"])
                 cached_by_date[date_key] = day_candles
                 conn.execute(
-                    "INSERT OR REPLACE INTO candle_cache "
-                    "(groww_symbol, segment, interval, date, candles_json, fetched_at) "
-                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    "INSERT OR REPLACE INTO candle_cache (groww_symbol, segment, interval, date, candles_json, fetched_at) VALUES (?, ?, ?, ?, ?, ?)",
                     (
                         groww_symbol,
                         segment,
@@ -303,18 +313,10 @@ def get_cache_stats() -> dict:
     conn = _get_conn()
     _init_schema(conn)
     try:
-        total = conn.execute(
-            "SELECT COUNT(*) FROM candle_cache"
-        ).fetchone()[0]
-        size_bytes = conn.execute(
-            "SELECT SUM(LENGTH(candles_json)) FROM candle_cache"
-        ).fetchone()[0] or 0
-        oldest = conn.execute(
-            "SELECT MIN(date) FROM candle_cache"
-        ).fetchone()[0]
-        newest = conn.execute(
-            "SELECT MAX(date) FROM candle_cache"
-        ).fetchone()[0]
+        total = conn.execute("SELECT COUNT(*) FROM candle_cache").fetchone()[0]
+        size_bytes = conn.execute("SELECT SUM(LENGTH(candles_json)) FROM candle_cache").fetchone()[0] or 0
+        oldest = conn.execute("SELECT MIN(date) FROM candle_cache").fetchone()[0]
+        newest = conn.execute("SELECT MAX(date) FROM candle_cache").fetchone()[0]
         return {
             "total_entries": total,
             "size_bytes": size_bytes,
