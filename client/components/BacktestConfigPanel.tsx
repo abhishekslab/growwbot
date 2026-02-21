@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import SymbolSearch from "./SymbolSearch";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -59,23 +60,26 @@ export default function BacktestConfigPanel({
   const [candleInterval, setCandleInterval] = useState("5minute");
   const [initialCapital, setInitialCapital] = useState(100000);
   const [riskPercent, setRiskPercent] = useState(1);
-  const [exchange, setExchange] = useState("NSE");
+  const [exchange] = useState("NSE");
 
   useEffect(() => {
     fetch(`${API}/api/algos`)
       .then((r) => r.json())
       .then((data) => {
-        const list = (data.algos || []).map(
-          (a: { algo_id: string; name?: string; description?: string }) => ({
-            algo_id: a.algo_id,
-            name: a.name || a.algo_id,
-            description: a.description,
-          }),
-        );
+        if (!data?.algos?.length) return;
+        const list = data.algos.map((a: { id: string; name?: string }) => ({
+          algo_id: a.id,
+          name: a.name || a.id,
+        }));
         setAlgos(list);
-        if (list.length && !algoId) setAlgoId(list[0].algo_id);
+        setAlgoId(list[0].algo_id);
       })
       .catch(() => {});
+  }, []);
+
+  // Pre-warm instrument cache for faster symbol search
+  useEffect(() => {
+    fetch(`${API}/api/cache/warmup`, { method: "POST" }).catch(() => {});
   }, []);
 
   const handleSubmit = useCallback(
@@ -158,20 +162,12 @@ export default function BacktestConfigPanel({
             </label>
           </div>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-            Groww Symbol
-          </label>
-          <input
-            type="text"
-            value={growwSymbol}
-            onChange={(e) => setGrowwSymbol(e.target.value)}
-            placeholder={
-              segment === "CASH" ? "e.g. NSE-RELIANCE" : "e.g. NSE-NIFTY-30Sep25-24650-CE"
-            }
-            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-          />
-        </div>
+        <SymbolSearch
+          value={growwSymbol}
+          onChange={setGrowwSymbol}
+          segment={segment}
+          disabled={running}
+        />
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">

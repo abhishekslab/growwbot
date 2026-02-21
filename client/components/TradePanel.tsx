@@ -493,9 +493,9 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
           {/* Patterns */}
           {analysis.patterns.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-1">
-              {analysis.patterns.map((p, i) => (
+              {analysis.patterns.map((p) => (
                 <span
-                  key={i}
+                  key={p.displayName}
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                     p.sentiment === "BULLISH"
                       ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
@@ -510,8 +510,8 @@ export default function TradePanel({ symbol, ltp, candles, quote }: Props) {
 
           {/* Reasons */}
           <div className="space-y-0.5 text-[11px]">
-            {analysis.reasons.map((r, i) => (
-              <div key={i} className="flex items-start gap-1">
+            {analysis.reasons.map((r) => (
+              <div key={r.label} className="flex items-start gap-1">
                 <span className={`font-bold ${sentimentPrefix[r.sentiment].color}`}>
                   {sentimentPrefix[r.sentiment].char}
                 </span>

@@ -179,9 +179,9 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
           )}
           {snapshot.patterns.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">
-              {snapshot.patterns.map((p, i) => (
+              {snapshot.patterns.map((p) => (
                 <span
-                  key={i}
+                  key={p}
                   className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] dark:bg-gray-700"
                 >
                   {p}
@@ -200,8 +200,8 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
           )}
           {snapshot.warnings.length > 0 && (
             <div className="mt-1 space-y-0.5">
-              {snapshot.warningDetails.map((w, i) => (
-                <div key={i} className="text-[10px] text-orange-600 dark:text-orange-400">
+              {snapshot.warningDetails.map((w) => (
+                <div key={w} className="text-[10px] text-orange-600 dark:text-orange-400">
                   ⚠ {w}
                 </div>
               ))}
@@ -265,8 +265,8 @@ export default function TradeLearningCard({ trade }: { trade: Trade }) {
         <h4 className="mb-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Insights</h4>
         {insights.length > 0 ? (
           <ul className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
-            {insights.map((insight, i) => (
-              <li key={i} className="flex items-start gap-1.5">
+            {insights.map((insight) => (
+              <li key={insight} className="flex items-start gap-1.5">
                 <span className="mt-0.5 text-[10px] text-blue-500">●</span>
                 <span>{insight}</span>
               </li>
