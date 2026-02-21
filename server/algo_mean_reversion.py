@@ -108,3 +108,15 @@ class MeanReversion(BaseAlgorithm):
             fee_breakeven=fee_breakeven,
             expected_profit=expected_profit,
         )
+
+    def clone_with_config(self, overrides):
+        # type: (dict) -> BaseAlgorithm
+        """Create a fresh instance with merged config for backtesting."""
+        from algo_mean_reversion import MeanReversion
+        global_merged = dict(self.global_cfg)
+        for k, v in overrides.items():
+            if k != "mean_reversion":
+                global_merged[k] = v
+        algo_overrides = overrides.get("mean_reversion") or {}
+        global_merged["mean_reversion"] = dict(self.cfg, **algo_overrides)
+        return MeanReversion(global_merged)

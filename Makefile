@@ -1,9 +1,19 @@
+BIN = $(VIRTUAL_ENV)/bin
+PYTHON = $(BIN)/python3
+
+
 .PHONY: install dev lint build clean docker-up docker-down
 
 install:
-	pip3 install -r server/requirements.txt
+	uv pip install -r server/requirements.txt
 	cd client && npm install
 	npm install
+
+init-db:
+	@echo "Initializing database..."
+	@# This assumes you have a script or function to create tables
+	@uv run python3 -c "import os; from server.trades_db import init_db; init_db()" || echo "Database already exists or init function not found."
+
 
 dev:
 	@echo "Starting backend and frontend..."
@@ -14,7 +24,7 @@ dev:
 	wait
 
 lint:
-	python3 -m ruff check server/
+	${PYTHON} -m ruff check server/
 	cd client && npx eslint .
 	cd client && npx prettier --check .
 
