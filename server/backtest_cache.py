@@ -71,6 +71,27 @@ def _init_schema(conn: sqlite3.Connection) -> None:
             PRIMARY KEY (groww_symbol, segment, interval, date)
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS daily_candles (
+            groww_symbol TEXT NOT NULL,
+            date TEXT NOT NULL,
+            open REAL NOT NULL,
+            high REAL NOT NULL,
+            low REAL NOT NULL,
+            close REAL NOT NULL,
+            volume INTEGER NOT NULL,
+            fetched_at TEXT NOT NULL,
+            PRIMARY KEY (groww_symbol, date)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS daily_picks_snapshots (
+            date TEXT NOT NULL,
+            candidates_json TEXT NOT NULL,
+            computed_at TEXT NOT NULL,
+            PRIMARY KEY (date)
+        )
+    """)
     conn.commit()
 
 
@@ -342,5 +363,85 @@ def clear_cache(groww_symbol: Optional[str] = None) -> int:
         deleted = cursor.rowcount
         conn.commit()
         return deleted
+    finally:
+        conn.close()
+
+
+def get_daily_candles(groww: Any, groww_symbol: str, date: str, exchange: str = "NSE") -> Optional[dict]:
+    """Fetch daily candle (EOD) for a symbol on specific date. Uses cache."""
+    conn = _get_conn()
+    _init_schema(conn)
+    try:
+        row = conn.execute(
+            "SELECT open, high, low, close, volume FROM daily_candles WHERE groww_symbol = ? AND date = ?", (groww_symbol, date)
+        ).fetchone()
+
+        if row:
+            return {"symbol": groww_symbol, "date": date, "open": row[0], "high": row[1], "low": row[2], "close": row[3], "volume": row[4]}
+
+        # Fetch from API
+        try:
+            # Build symbol for GrowwClient (e.g., "NSE-RELIANCE" for CASH)
+            symbol = f"{exchange}-{groww_symbol}"
+            result = groww.get_historical_candles(
+                symbol=symbol,
+                exchange=exchange,
+                from_date=f"{date} {MARKET_START_TIME}",
+                to_date=f"{date} {MARKET_END_TIME}",
+                interval="1day",
+            )
+
+            candles = _parse_candles_response(result)
+            if candles:
+                c = candles[0]
+                conn.execute(
+                    """INSERT OR REPLACE INTO daily_candles 
+                       (groww_symbol, date, open, high, low, close, volume, fetched_at) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (groww_symbol, date, c["open"], c["high"], c["low"], c["close"], c["volume"], datetime.utcnow().isoformat()),
+                )
+                conn.commit()
+                return {
+                    "symbol": groww_symbol,
+                    "date": date,
+                    "open": c["open"],
+                    "high": c["high"],
+                    "low": c["low"],
+                    "close": c["close"],
+                    "volume": c["volume"],
+                }
+        except Exception as e:
+            logger.warning("Failed to fetch daily candle for %s on %s: %s", groww_symbol, date, e)
+
+        return None
+    finally:
+        conn.close()
+
+
+def get_daily_picks_snapshot(date: str) -> Optional[dict]:
+    """Get cached daily picks snapshot for a date."""
+    conn = _get_conn()
+    _init_schema(conn)
+    try:
+        row = conn.execute("SELECT candidates_json FROM daily_picks_snapshots WHERE date = ?", (date,)).fetchone()
+
+        if row:
+            return json.loads(row[0])
+        return None
+    finally:
+        conn.close()
+
+
+def save_daily_picks_snapshot(date: str, snapshot: dict) -> None:
+    """Save daily picks snapshot to cache."""
+    conn = _get_conn()
+    _init_schema(conn)
+    try:
+        conn.execute(
+            """INSERT OR REPLACE INTO daily_picks_snapshots 
+               (date, candidates_json, computed_at) VALUES (?, ?, ?)""",
+            (date, json.dumps(snapshot), datetime.utcnow().isoformat()),
+        )
+        conn.commit()
     finally:
         conn.close()

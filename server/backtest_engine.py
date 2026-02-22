@@ -122,8 +122,14 @@ def _compute_metrics(
     # Daily returns for Sharpe/Sortino (bucket equity curve by day)
     daily_equity = {}
     for point in equity_curve:
-        dt = datetime.utcfromtimestamp(point["time"])
-        day_key = dt.strftime("%Y-%m-%d")
+        # Support both "time" (timestamp) and "date" (string) formats
+        if "time" in point:
+            dt = datetime.utcfromtimestamp(point["time"])
+            day_key = dt.strftime("%Y-%m-%d")
+        elif "date" in point:
+            day_key = point["date"]
+        else:
+            continue
         daily_equity[day_key] = point["equity"]
     sorted_days = sorted(daily_equity.keys())
     daily_returns = []
