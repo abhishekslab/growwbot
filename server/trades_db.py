@@ -117,6 +117,17 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_algo_signals_algo_id ON algo_signals(algo_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_algo_signals_created ON algo_signals(created_at)")
 
+    # Auth tokens table — single-row token storage (id=1 enforced by CHECK)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS auth_tokens (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            access_token TEXT NOT NULL,
+            created_at REAL NOT NULL,
+            expires_at REAL NOT NULL,
+            updated_at REAL NOT NULL
+        )
+    """)
+
     # Algo settings table — persists enabled/capital/compounding per algo
     conn.execute("""
         CREATE TABLE IF NOT EXISTS algo_settings (
