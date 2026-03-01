@@ -59,7 +59,10 @@ export default function AlgoSignalFeed({ signals, algoNames }: AlgoSignalFeedPro
     <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       <div className="divide-y divide-gray-100 dark:divide-gray-700">
         {signals.map((signal, idx) => (
-          <div key={idx} className="flex items-start gap-3 px-4 py-3">
+          <div
+            key={`${signal.algo_id}-${signal.symbol}-${signal.timestamp || signal.created_at || idx}`}
+            className="flex items-start gap-3 px-4 py-3"
+          >
             <span className="mt-0.5 shrink-0 text-xs text-gray-400 dark:text-gray-500">
               {formatTime(signal)}
             </span>
@@ -76,7 +79,7 @@ export default function AlgoSignalFeed({ signals, algoNames }: AlgoSignalFeedPro
             </span>
             <span
               className={`shrink-0 text-xs font-semibold ${
-                SIGNAL_COLORS[signal.signal_type] || "text-gray-500"
+                SIGNAL_COLORS[signal.signal_type] || "text-gray-500 dark:text-gray-400"
               }`}
             >
               {signal.signal_type}
