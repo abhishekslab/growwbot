@@ -41,24 +41,12 @@ def _batch_ohlc(groww, instruments_df, batch_size=50, sleep_between=0.1, cache=N
                 logger.warning("OHLC batch %d failed: %s", i, e)
                 ohlc = {}
         else:
-            retries = 0
-            while retries < 3:
-                try:
-                    ohlc = groww.get_ohlc(
-                        exchange_trading_symbols=batch, segment="CASH"
-                    )
-                    break
-                except Exception as e:
-                    err_str = str(e)
-                    if "429" in err_str or "rate" in err_str.lower():
-                        retries += 1
-                        time.sleep(0.5 * (2 ** retries))
-                        continue
-                    logger.warning("OHLC batch %d failed: %s", i, e)
-                    ohlc = {}
-                    break
-            else:
-                logger.warning("OHLC batch %d exhausted retries", i)
+            try:
+                ohlc = groww.get_ohlc(
+                    exchange_trading_symbols=batch, segment="CASH"
+                )
+            except Exception as e:
+                logger.warning("OHLC batch %d failed: %s", i, e)
                 ohlc = {}
 
         if not isinstance(ohlc, dict):
@@ -345,18 +333,12 @@ def _get_fno_symbols(instruments_full_df):
 
 
 def _fetch_quote_volume(groww, symbol):
-    """Return today's volume from the quote API with retry on rate limit."""
-    for attempt in range(4):
-        try:
-            quote = groww.get_quote(symbol, "NSE", "CASH")
-            return int(float(quote.get("volume", 0) if isinstance(quote, dict) else 0))
-        except Exception as e:
-            err_str = str(e).lower()
-            if "rate" in err_str or "429" in err_str:
-                time.sleep(0.5 * (2 ** attempt))
-                continue
-            return 0
-    return 0
+    """Return today's volume from the quote API."""
+    try:
+        quote = groww.get_quote(symbol, "NSE", "CASH")
+        return int(float(quote.get("volume", 0) if isinstance(quote, dict) else 0))
+    except Exception:
+        return 0
 
 
 def _volume_enrich(groww, candidates, cache=None, max_workers=3):
@@ -555,24 +537,12 @@ def _batch_ohlc_streaming(groww, instruments_df, batch_size=50, sleep_between=0.
                 logger.warning("OHLC batch %d failed: %s", i, e)
                 ohlc = {}
         else:
-            retries = 0
-            while retries < 3:
-                try:
-                    ohlc = groww.get_ohlc(
-                        exchange_trading_symbols=batch, segment="CASH"
-                    )
-                    break
-                except Exception as e:
-                    err_str = str(e)
-                    if "429" in err_str or "rate" in err_str.lower():
-                        retries += 1
-                        time.sleep(0.5 * (2 ** retries))
-                        continue
-                    logger.warning("OHLC batch %d failed: %s", i, e)
-                    ohlc = {}
-                    break
-            else:
-                logger.warning("OHLC batch %d exhausted retries", i)
+            try:
+                ohlc = groww.get_ohlc(
+                    exchange_trading_symbols=batch, segment="CASH"
+                )
+            except Exception as e:
+                logger.warning("OHLC batch %d failed: %s", i, e)
                 ohlc = {}
 
         if not isinstance(ohlc, dict):
