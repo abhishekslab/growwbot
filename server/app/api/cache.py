@@ -23,9 +23,13 @@ market_cache = MarketCache()
 
 @router.get("/status")
 async def cache_status():
-    """Get cache status."""
+    """Get cache status including rate limiter usage."""
     try:
-        return market_cache.status()
+        from infrastructure.rate_limiter import get_rate_limiter
+
+        status = market_cache.status()
+        status["rate_limiter"] = get_rate_limiter().status()
+        return status
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get cache status: {e}")
 
