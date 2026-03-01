@@ -3,6 +3,12 @@
 **/.env.*
 !**/.env.example
 
+# Persisted auth token (legacy file-based, now DB-backed)
+server/.groww_token
+server/.cache/
+
+# Logs
+server/logs/
 # Python
 __pycache__/
 *.pyc
