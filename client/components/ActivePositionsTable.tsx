@@ -99,7 +99,9 @@ export default function ActivePositionsTable({ trades, flashSymbols, onSell }: P
                     {t.current_ltp > 0 ? fmt(t.current_ltp) : "—"}
                   </span>
                   {t.current_ltp > 0 && (
-                    <span className={`ml-1 text-xs ${isUp ? "text-green-600" : "text-red-600"}`}>
+                    <span
+                      className={`ml-1 text-xs ${isUp ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                    >
                       {isUp ? "▲" : "▼"}
                     </span>
                   )}

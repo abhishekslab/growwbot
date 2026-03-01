@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --chart-grid: #e5e7eb;
+  --chart-axis-tick: #4b5563;
 }
 
 @theme inline {
@@ -16,6 +18,8 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --chart-grid: #374151;
+    --chart-axis-tick: #9ca3af;
   }
 }
 
