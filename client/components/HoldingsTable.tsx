@@ -93,12 +93,12 @@ export default function HoldingsTable({ holdings }: { holdings: Holding[] }) {
                 {formatCurrency(h.current_value)}
               </td>
               <td
-                className={`px-4 py-3 font-medium ${h.pnl >= 0 ? "text-green-600" : "text-red-600"}`}
+                className={`px-4 py-3 font-medium ${h.pnl >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
               >
                 {formatCurrency(h.pnl)}
               </td>
               <td
-                className={`px-4 py-3 font-medium ${h.pnl_percentage >= 0 ? "text-green-600" : "text-red-600"}`}
+                className={`px-4 py-3 font-medium ${h.pnl_percentage >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
               >
                 {h.pnl_percentage >= 0 ? "+" : ""}
                 {h.pnl_percentage.toFixed(2)}%

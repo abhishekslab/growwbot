@@ -30,16 +30,11 @@ export default function BacktestEquityCurve({ data }: { data: EquityPoint[] }) {
       <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Equity Curve</h3>
       <ResponsiveContainer width="100%" height={300}>
         <AreaChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 11 }}
-            className="text-gray-600 dark:text-gray-400"
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+          <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--chart-axis-tick)" }} />
           <YAxis
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: "var(--chart-axis-tick)" }}
             tickFormatter={(val) => "₹" + val.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-            className="text-gray-600 dark:text-gray-400"
           />
           <Tooltip
             formatter={(value) =>
