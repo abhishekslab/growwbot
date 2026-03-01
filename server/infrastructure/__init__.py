@@ -11,6 +11,7 @@ from infrastructure.groww_client import (
     reset_groww_client,
     set_groww_client,
 )
+from infrastructure.rate_limiter import get_rate_limiter
 
 __all__ = [
     "GrowwClient",
@@ -20,6 +21,7 @@ __all__ = [
     "fetch_ltp",
     "fetch_quote",
     "get_groww_client",
+    "get_rate_limiter",
     "reset_groww_client",
     "set_groww_client",
 ]
