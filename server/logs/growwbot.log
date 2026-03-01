@@ -805,3 +805,7 @@
 2026-03-01 16:40:29,303 | INFO     | cache | cache.py:143 | warmup | Cache warmup complete
 2026-03-01 16:40:43,505 | WARNING  | services.position_monitor | position_monitor.py:295 | _fetch_ltp_batch | PositionMonitor LTP batch failed: Authentication failed. Your API token has either expired or is invalid.
 2026-03-01 16:40:43,507 | WARNING  | services.position_monitor | position_monitor.py:78 | _monitor_loop | PositionMonitor: 3 consecutive failures, backing off to 40s
+2026-03-01 16:40:53,457 | INFO     | root | main.py:91 | lifespan | ============================================================
+2026-03-01 16:40:53,458 | INFO     | root | main.py:92 | lifespan | Shutting down GrowwBot API Server
+2026-03-01 16:40:53,458 | INFO     | root | main.py:93 | lifespan | ============================================================
+2026-03-01 16:40:53,459 | INFO     | root | main.py:95 | lifespan | Stopping algo engine...
