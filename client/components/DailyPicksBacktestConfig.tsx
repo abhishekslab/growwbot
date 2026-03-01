@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { DailyPicksBacktestRequest } from "./page";
+import type { DailyPicksBacktestRequest } from "../app/backtest/daily-picks/page";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
