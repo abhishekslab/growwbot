@@ -53,6 +53,7 @@ export default function TradesPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const prevLtpRef = useRef<Record<string, number>>({});
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchHistory = useCallback(() => {
     const paperParam = `is_paper=${paperMode}`;
@@ -96,7 +97,8 @@ export default function TradesPage() {
           }
           if (changed.size > 0) {
             setFlashSymbols(changed);
-            setTimeout(() => setFlashSymbols(new Set()), 500);
+            if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+            flashTimerRef.current = setTimeout(() => setFlashSymbols(new Set()), 500);
           }
 
           setActiveTrades(newTrades);
@@ -106,7 +108,10 @@ export default function TradesPage() {
 
     poll();
     const interval = setInterval(poll, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    };
   }, [loaded, paperMode]);
 
   // Initial fetch for history + summary
