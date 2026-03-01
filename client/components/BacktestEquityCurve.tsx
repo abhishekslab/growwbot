@@ -42,8 +42,8 @@ export default function BacktestEquityCurve({ data }: { data: EquityPoint[] }) {
             className="text-gray-600 dark:text-gray-400"
           />
           <Tooltip
-            formatter={(value: number) =>
-              "₹" + value.toLocaleString("en-IN", { minimumFractionDigits: 2 })
+            formatter={(value) =>
+              "₹" + Number(value).toLocaleString("en-IN", { minimumFractionDigits: 2 })
             }
             labelFormatter={(label) => label}
           />

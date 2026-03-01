@@ -122,8 +122,9 @@ export default function BacktestPage() {
           if (!res.ok) throw new Error(res.statusText);
           return res.body?.getReader();
         })
-        .then((reader) => {
-          if (!reader) throw new Error("No body");
+        .then((r) => {
+          if (!r) throw new Error("No body");
+          const reader = r;
           const decoder = new TextDecoder();
           let buffer = "";
           function read(): Promise<void> {

@@ -35,8 +35,8 @@ class GrowwClientBase:
         """Get last traded price for symbols."""
         raise NotImplementedError
 
-    def get_ohlc(self, symbol: str, exchange: str = "NSE", segment: str = "CASH") -> Dict:
-        """Get OHLC data for a symbol."""
+    def get_ohlc(self, symbol: str = None, exchange: str = "NSE", segment: str = "CASH", exchange_trading_symbols: tuple = None) -> Dict:
+        """Get OHLC data for a symbol or batch of symbols."""
         raise NotImplementedError
 
     def get_quote(self, symbol: str, exchange: str = "NSE", segment: str = "CASH") -> Dict:
@@ -137,11 +137,13 @@ class GrowwClient(GrowwClientBase):
         self._rate_limit("live_data")
         return client.get_ltp(exchange_trading_symbols=exchange_trading_symbols, segment=segment)
 
-    def get_ohlc(self, symbol: str, exchange: str = "NSE", segment: str = "CASH") -> Dict:
+    def get_ohlc(self, symbol: str = None, exchange: str = "NSE", segment: str = "CASH", exchange_trading_symbols: tuple = None) -> Dict:
         client = self._ensure_client()
         if client is None:
             return {}
         self._rate_limit("live_data")
+        if exchange_trading_symbols is not None:
+            return client.get_ohlc(exchange_trading_symbols=exchange_trading_symbols, segment=segment)
         return client.get_ohlc(symbol, exchange, segment)
 
     def get_quote(self, symbol: str, exchange: str = "NSE", segment: str = "CASH") -> Dict:
@@ -208,7 +210,13 @@ class MockGrowwClient(GrowwClientBase):
             result[sym] = {"ltp": self._mock_data.get("ltp", {}).get(symbol, 2500.0)}
         return result
 
-    def get_ohlc(self, symbol: str, exchange: str = "NSE", segment: str = "CASH") -> Dict:
+    def get_ohlc(self, symbol: str = None, exchange: str = "NSE", segment: str = "CASH", exchange_trading_symbols: tuple = None) -> Dict:
+        if exchange_trading_symbols is not None:
+            result = {}
+            for sym in exchange_trading_symbols:
+                s = sym.replace("NSE_", "")
+                result[sym] = self._mock_data.get("ohlc", {"symbol": s, "open": 2500.0, "high": 2550.0, "low": 2480.0, "close": 2520.0, "volume": 1000000})
+            return result
         return self._mock_data.get("ohlc", {"symbol": symbol, "open": 2500.0, "high": 2550.0, "low": 2480.0, "close": 2520.0, "volume": 1000000})
 
     def get_quote(self, symbol: str, exchange: str = "NSE", segment: str = "CASH") -> Dict:
