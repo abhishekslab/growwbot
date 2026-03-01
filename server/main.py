@@ -66,6 +66,13 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized")
 
+    # Start token refresh daemon (after DB init so auth_tokens table exists)
+    from infrastructure.auth import start_token_refresh_daemon, stop_token_refresh_daemon
+
+    logger.info("Starting token refresh daemon...")
+    start_token_refresh_daemon()
+    logger.info("Token refresh daemon started")
+
     # Initialize new services
     global trade_service, algo_service
     from repositories import TradeRepository, AlgoRepository
@@ -91,6 +98,10 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 60)
     logger.info("Shutting down GrowwBot API Server")
     logger.info("=" * 60)
+
+    logger.info("Stopping token refresh daemon...")
+    stop_token_refresh_daemon()
+    logger.info("Token refresh daemon stopped")
 
     logger.info("Stopping algo engine...")
     algo_engine.stop()

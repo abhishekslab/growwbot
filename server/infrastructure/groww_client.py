@@ -5,22 +5,16 @@ This module provides abstractions for external services (Groww API, cache, news)
 to improve testability and reduce coupling.
 """
 
-from typing import Any, Dict, List, Optional
-import logging
-import os
 import time
+from typing import Any, Dict, List, Optional
 
+from core.exceptions import RateLimitError
 from core.logging_config import get_logger
 from infrastructure.auth import (
+    _do_fresh_auth,
     _load_token,
-    _save_token,
     get_cached_client,
     set_cached_client,
-    get_auth_fail_time,
-    set_auth_fail_time,
-    get_auth_lock,
-    get_token_ttl,
-    get_auth_cooldown,
 )
 
 logger = get_logger("infrastructure")
@@ -67,45 +61,30 @@ class GrowwClientBase:
 
 
 def _create_groww_client() -> Optional[object]:
-    """Create a new Groww client, handling authentication."""
+    """Create a new Groww client from DB-persisted token, or fresh auth as fallback."""
     from growwapi import GrowwAPI
 
     now = time.time()
 
+    # Try loading existing valid token from DB
     saved_token, saved_time = _load_token()
     if saved_token:
-        logger.info("Loaded persisted token from disk (age %.0fs)", now - saved_time)
+        logger.info("Loaded token from DB (age %.0fs)", now - saved_time)
         client = GrowwAPI(saved_token)
         set_cached_client(client)
         return client
 
-    auth_fail_time = get_auth_fail_time()
-    if auth_fail_time and (now - auth_fail_time) < get_auth_cooldown():
-        wait = int(get_auth_cooldown() - (now - auth_fail_time))
-        logger.warning("Auth rate-limited. Retry in %ds", wait)
-        return None
-
-    api_key = os.getenv("API_KEY")
-    api_secret = os.getenv("API_SECRET")
-    if not api_key or not api_secret:
-        logger.warning("API_KEY and API_SECRET not set")
-        return None
-
-    try:
-        access_token = GrowwAPI.get_access_token(api_key, secret=api_secret)
-        client = GrowwAPI(access_token)
-        set_cached_client(client)
-        _save_token(access_token)
-        logger.info("Groww auth successful, token persisted to disk")
+    # No valid token — do fresh auth (handles first-ever startup before daemon kicks in)
+    client = _do_fresh_auth()
+    if client:
         return client
-    except Exception as e:
-        logger.warning("Auth failed: %s", e)
-        set_auth_fail_time(time.time())
-        cached = get_cached_client()
-        if cached:
-            logger.warning("Returning stale client")
-            return cached
-        return None
+
+    # Last resort: return stale cached client if available
+    cached = get_cached_client()
+    if cached:
+        logger.warning("Returning stale cached client")
+        return cached
+    return None
 
 
 class GrowwClient(GrowwClientBase):
@@ -132,6 +111,13 @@ class GrowwClient(GrowwClientBase):
         self._client = _create_groww_client()
         return self._client
 
+    def _rate_limit(self, bucket_type: str) -> None:
+        """Acquire a rate-limit slot or raise RateLimitError on timeout."""
+        from infrastructure.rate_limiter import get_rate_limiter
+
+        if not get_rate_limiter().acquire(bucket_type):
+            raise RateLimitError("Rate limit timeout for bucket: %s" % bucket_type)
+
     def get_access_token(self, api_key: str, secret: str) -> str:
         from growwapi import GrowwAPI
 
@@ -141,30 +127,35 @@ class GrowwClient(GrowwClientBase):
         client = self._ensure_client()
         if client is None:
             return {"holdings": [], "error": "Authentication not available"}
+        self._rate_limit("non_trading")
         return client.get_holdings_for_user()
 
     def get_ltp(self, exchange_trading_symbols: tuple, segment: str = "CASH") -> Dict:
         client = self._ensure_client()
         if client is None:
             return {}
+        self._rate_limit("live_data")
         return client.get_ltp(exchange_trading_symbols=exchange_trading_symbols, segment=segment)
 
     def get_ohlc(self, symbol: str, exchange: str = "NSE", segment: str = "CASH") -> Dict:
         client = self._ensure_client()
         if client is None:
             return {}
+        self._rate_limit("live_data")
         return client.get_ohlc(symbol, exchange, segment)
 
     def get_quote(self, symbol: str, exchange: str = "NSE", segment: str = "CASH") -> Dict:
         client = self._ensure_client()
         if client is None:
             return {}
+        self._rate_limit("live_data")
         return client.get_quote(symbol, exchange, segment)
 
     def get_historical_candles(self, symbol: str, exchange: str, from_date: str, to_date: str, interval: str = "1d") -> List[Dict]:
         client = self._ensure_client()
         if client is None:
             return []
+        self._rate_limit("live_data")
         # Map to GrowwAPI parameter names
         return client.get_historical_candles(
             exchange=exchange,
@@ -179,18 +170,21 @@ class GrowwClient(GrowwClientBase):
         client = self._ensure_client()
         if client is None:
             return []
+        self._rate_limit("non_trading")
         return client.get_all_instruments()
 
     def place_order(self, **kwargs) -> Dict:
         client = self._ensure_client()
         if client is None:
             return {"success": False, "error": "Authentication not available"}
+        self._rate_limit("orders")
         return client.place_order(**kwargs)
 
     def get_order_status(self, segment: str, groww_order_id: str) -> Dict:
         client = self._ensure_client()
         if client is None:
             return {"status": "UNKNOWN"}
+        self._rate_limit("non_trading")
         return client.get_order_status(segment=segment, groww_order_id=groww_order_id)
 
 
