@@ -45,7 +45,7 @@ class TradeUpdate(BaseModel):
     notes: Optional[str] = None
     stop_loss: Optional[float] = Field(None, gt=0)
     target: Optional[float] = Field(None, gt=0)
-    exit_trigger: Optional[str] = Field(None, pattern="^(SL|TARGET|MANUAL)$")
+    exit_trigger: Optional[str] = Field(None, pattern="^(SL|TARGET|MANUAL|TIME_EXIT|FORCE_CLOSE)$")
 
 
 class Trade(TradeBase):
@@ -62,7 +62,7 @@ class Trade(TradeBase):
     updated_at: str
     order_status: Optional[str] = Field(None, pattern="^(PLACED|REJECTED|FILLED|SIMULATED)$")
     groww_order_id: Optional[str] = None
-    exit_trigger: Optional[str] = Field(None, pattern="^(SL|TARGET|MANUAL)$")
+    exit_trigger: Optional[str] = Field(None, pattern="^(SL|TARGET|MANUAL|TIME_EXIT|FORCE_CLOSE)$")
     algo_id: Optional[str] = None
     algo_version: Optional[str] = None
 
