@@ -444,7 +444,6 @@ class AlgoEngine:
             self._cycle_fetch_count += 1
             self._candle_cache[symbol] = (candles, now + self._candle_cache_ttl)
             self._candle_fail_counts.pop(symbol, None)
-            time.sleep(0.4)
             return candles
         except Exception as e:
             self._cycle_fetch_count += 1
