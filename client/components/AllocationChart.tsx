@@ -49,8 +49,8 @@ export default function AllocationChart({ holdings }: { holdings: Holding[] }) {
               `${props.name ?? ""} ${(((props.percent as number) ?? 0) * 100).toFixed(1)}%`
             }
           >
-            {data.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            {data.map((entry, index) => (
+              <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
           <Tooltip

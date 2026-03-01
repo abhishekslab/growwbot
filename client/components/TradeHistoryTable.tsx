@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import TradeLearningCard from "@/components/TradeLearningCard";
 
 interface Trade {
@@ -151,9 +151,8 @@ export default function TradeHistoryTable({ trades }: Props) {
             </thead>
             <tbody>
               {sorted.map((t) => (
-                <>
+                <Fragment key={t.id}>
                   <tr
-                    key={t.id}
                     onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
                     className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
                   >
@@ -174,7 +173,9 @@ export default function TradeHistoryTable({ trades }: Props) {
                       {t.actual_pnl !== null ? (
                         <span
                           className={`font-medium ${
-                            t.actual_pnl >= 0 ? "text-green-600" : "text-red-600"
+                            t.actual_pnl >= 0
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-red-600 dark:text-red-400"
                           }`}
                         >
                           {t.actual_pnl >= 0 ? "+" : "-"}
@@ -224,16 +225,13 @@ export default function TradeHistoryTable({ trades }: Props) {
                     </td>
                   </tr>
                   {expandedId === t.id && (
-                    <tr
-                      key={`${t.id}-expanded`}
-                      className="border-b border-gray-100 dark:border-gray-800"
-                    >
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
                       <td colSpan={7} className="bg-gray-50 dark:bg-gray-800/50">
                         <TradeLearningCard trade={t} />
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

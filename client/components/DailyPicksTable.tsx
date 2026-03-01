@@ -82,8 +82,10 @@ export default function DailyPicksTable({
     }
   };
 
-  const formatCurrency = (val: number) =>
-    "₹" + val.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatCurrency = (val: number | undefined | null) =>
+    val == null
+      ? "₹0.00"
+      : "₹" + val.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // Volume/turnover not yet enriched during ohlc stage
   const volumeEnriched = stage !== "ohlc" && stage !== "starting";
@@ -127,7 +129,7 @@ export default function DailyPicksTable({
           {sorted.map((r) => {
             const isOther = r.tier === "other";
             const isFlashing = flashSymbols?.has(r.symbol) ?? false;
-            const isNeg = r.day_change_pct < 0;
+            const isNeg = (r.day_change_pct ?? 0) < 0;
             const inRange = isInPriceRange(r.ltp);
             const dimmed = smallCapitalMode && !inRange;
             return (
@@ -136,7 +138,7 @@ export default function DailyPicksTable({
                 onClick={() => router.push(`/symbol/${r.symbol}`)}
                 className={`cursor-pointer border-b transition-all duration-300 ${
                   dimmed ? "opacity-50" : ""
-                }${
+                } ${
                   isOther
                     ? "border-gray-100 text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-500 dark:hover:bg-gray-800/50"
                     : "border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
@@ -181,7 +183,7 @@ export default function DailyPicksTable({
                   }`}
                 >
                   {isNeg ? "" : "+"}
-                  {r.day_change_pct.toFixed(2)}%
+                  {(r.day_change_pct ?? 0).toFixed(2)}%
                 </td>
 
                 {/* Volume */}

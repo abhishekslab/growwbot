@@ -43,12 +43,16 @@ class GrowwClientBase:
         """Get quote for a symbol."""
         raise NotImplementedError
 
-    def get_historical_candles(self, symbol: str, exchange: str, from_date: str, to_date: str, interval: str = "1d") -> List[Dict]:
+    def get_historical_candles(self, exchange: str = "NSE", segment: str = "CASH", groww_symbol: str = "", start_time: str = "", end_time: str = "", candle_interval: str = "1day", **kwargs) -> Dict:
         """Get historical candle data."""
         raise NotImplementedError
 
     def get_all_instruments(self) -> List[Dict]:
         """Get all available instruments."""
+        raise NotImplementedError
+
+    def get_instrument_by_exchange_and_trading_symbol(self, exchange: str, trading_symbol: str) -> Dict:
+        """Look up a single instrument by exchange and trading symbol."""
         raise NotImplementedError
 
     def place_order(self, **kwargs) -> Dict:
@@ -153,19 +157,18 @@ class GrowwClient(GrowwClientBase):
         self._rate_limit("live_data")
         return client.get_quote(symbol, exchange, segment)
 
-    def get_historical_candles(self, symbol: str, exchange: str, from_date: str, to_date: str, interval: str = "1d") -> List[Dict]:
+    def get_historical_candles(self, exchange: str = "NSE", segment: str = "CASH", groww_symbol: str = "", start_time: str = "", end_time: str = "", candle_interval: str = "1day", **kwargs) -> Dict:
         client = self._ensure_client()
         if client is None:
-            return []
+            return {}
         self._rate_limit("live_data")
-        # Map to GrowwAPI parameter names
         return client.get_historical_candles(
             exchange=exchange,
-            segment="CASH",
-            groww_symbol=symbol,
-            start_time=from_date,
-            end_time=to_date,
-            candle_interval=interval,
+            segment=segment,
+            groww_symbol=groww_symbol,
+            start_time=start_time,
+            end_time=end_time,
+            candle_interval=candle_interval,
         )
 
     def get_all_instruments(self) -> List[Dict]:
@@ -174,6 +177,13 @@ class GrowwClient(GrowwClientBase):
             return []
         self._rate_limit("non_trading")
         return client.get_all_instruments()
+
+    def get_instrument_by_exchange_and_trading_symbol(self, exchange: str, trading_symbol: str) -> Dict:
+        client = self._ensure_client()
+        if client is None:
+            return {}
+        self._rate_limit("non_trading")
+        return client.get_instrument_by_exchange_and_trading_symbol(exchange, trading_symbol)
 
     def place_order(self, **kwargs) -> Dict:
         client = self._ensure_client()
@@ -235,11 +245,14 @@ class MockGrowwClient(GrowwClientBase):
             "prev_close": 2500.0,
         }
 
-    def get_historical_candles(self, symbol: str, exchange: str, from_date: str, to_date: str, interval: str = "1d") -> List[Dict]:
+    def get_historical_candles(self, exchange: str = "NSE", segment: str = "CASH", groww_symbol: str = "", start_time: str = "", end_time: str = "", candle_interval: str = "1day", **kwargs) -> Dict:
         return self._mock_data.get("candles", [{"time": 1704067200, "open": 2500, "high": 2550, "low": 2480, "close": 2520, "volume": 1000000}])
 
     def get_all_instruments(self) -> List[Dict]:
         return self._mock_data.get("instruments", [{"trading_symbol": "RELIANCE", "exchange_token": "1234", "instrument_key": "NSE:RELIANCE"}])
+
+    def get_instrument_by_exchange_and_trading_symbol(self, exchange: str, trading_symbol: str) -> Dict:
+        return self._mock_data.get("instrument", {"trading_symbol": trading_symbol, "groww_symbol": trading_symbol, "exchange_token": "1234"})
 
     def place_order(self, **kwargs) -> Dict:
         return self._mock_data.get("order", {"success": True, "order_id": "MOCK_ORDER_123", "message": "Order placed successfully (mock)"})
@@ -306,4 +319,4 @@ def fetch_quote(symbol: str) -> Dict:
 def fetch_candles(symbol: str, from_date: str, to_date: str, interval: str = "1d") -> List[Dict]:
     """Fetch historical candles for a symbol."""
     client = get_groww_client()
-    return client.get_historical_candles(symbol=symbol, exchange="NSE", from_date=from_date, to_date=to_date, interval=interval)
+    return client.get_historical_candles(exchange="NSE", segment="CASH", groww_symbol=symbol, start_time=from_date, end_time=to_date, candle_interval=interval)
